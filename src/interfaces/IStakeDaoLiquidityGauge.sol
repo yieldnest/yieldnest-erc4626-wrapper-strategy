@@ -101,9 +101,8 @@ interface IStakeDaoLiquidityGauge {
         uint256 last_update;
         uint256 integral;
     }
-    function reward_data(address) external view returns (
-        RewardData memory
-    );
+
+    function reward_data(address) external view returns (RewardData memory);
 
     function rewards_receiver(address) external view returns (address);
     function reward_integral_for(address, address) external view returns (uint256);

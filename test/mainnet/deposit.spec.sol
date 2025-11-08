@@ -7,6 +7,7 @@ import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
+import {console} from "forge-std/console.sol";
 
 contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     function setUp() public override {
@@ -55,7 +56,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         amounts[0] = halfAmount;
         amounts[1] = halfAmount;
         ICurvePool(curveLp).add_liquidity(amounts, 0);
-        
+
         address gauge = MC.STAKEDAO_CURVE_ynRWAx_USDC_LP;
 
         // Find how much LP tokens alice received (query balance)
@@ -64,9 +65,15 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Approve Gauge to spend LP tokens
         IERC20(curveLp).approve(gauge, lpBalance);
 
+        console.log("LP balance:", lpBalance);
+        // Log alice's gauge balance before deposit
+        console.log("Gauge balance before:", IERC20(gauge).balanceOf(alice));
+
         // Deposit all LP tokens into the Gauge as alice
         IStakeDaoLiquidityGauge(gauge).deposit(lpBalance);
 
+        // Log alice's gauge balance after deposit
+        console.log("Gauge balance after:", IERC20(gauge).balanceOf(alice));
 
         vm.stopPrank();
     }

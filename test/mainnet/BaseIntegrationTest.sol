@@ -17,6 +17,8 @@ contract BaseIntegrationTest is Test, AssertUtils {
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(stakedLPStrategy), ADMIN, "");
         stakedLPStrategy = StakedLPStrategy(payable(address(proxy)));
 
-        stakedLPStrategy.initialize(ADMIN, "Staked LP Strategy", "sLP", 18, true, true, 0, MC.CURVE_ynRWAx_USDC_LP);
+        stakedLPStrategy.initialize(
+            ADMIN, "Staked LP Strategy", "sLP", 18, true, true, 0, MC.STAKEDAO_CURVE_ynRWAx_USDC_LP
+        );
     }
 }
