@@ -37,8 +37,6 @@ contract DeployFlexStrategy is BaseScript {
             StakedLPStrategyDeployer.DeploymentParams({
                 name: name,
                 symbol: symbol_,
-                accountTokenName: "", // Not used/required, set as empty string
-                accountTokenSymbol: "", // Not used/required, set as empty string
                 decimals: decimals,
                 actors: actors,
                 stakeDaoLpToken: stakeDaoLpToken,

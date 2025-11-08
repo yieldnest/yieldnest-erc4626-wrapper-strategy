@@ -17,8 +17,6 @@ contract StakedLPStrategyDeployer {
     struct DeploymentParams {
         string name;
         string symbol;
-        string accountTokenName;
-        string accountTokenSymbol;
         uint8 decimals;
         IActors actors;
         address stakeDaoLpToken;
