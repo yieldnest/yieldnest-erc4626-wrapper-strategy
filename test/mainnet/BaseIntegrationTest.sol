@@ -19,11 +19,10 @@ contract BaseIntegrationTest is Test, AssertUtils {
 
         StakedLPStrategy.InitParams memory initParams = StakedLPStrategy.InitParams({
             admin: ADMIN,
-            name: "Staked LP Strategy",
-            symbol: "sLP",
+            name: "Staked LP Strategy ynRWAx/USDC",
+            symbol: "sLP-ynRWAx/USDC",
             decimals_: 18,
-            countNativeAsset_: true,
-            alwaysComputeTotalAssets_: true,
+            alwaysComputeTotalAssets_: false,
             defaultAssetIndex_: 0,
             stakeDaoLPToken_: MC.STAKEDAO_CURVE_ynRWAx_USDC_LP
         });

@@ -14,7 +14,6 @@ contract StakedLPStrategy is BaseStrategy {
         string name;
         string symbol;
         uint8 decimals_;
-        bool countNativeAsset_;
         bool alwaysComputeTotalAssets_;
         uint256 defaultAssetIndex_;
         address stakeDaoLPToken_;
@@ -30,8 +29,8 @@ contract StakedLPStrategy is BaseStrategy {
             params.name,
             params.symbol,
             params.decimals_,
-            true,
-            params.countNativeAsset_,
+            true, // paused
+            false, // countNativeAsset_ is false because the strategy does not hold the native asset
             params.alwaysComputeTotalAssets_,
             params.defaultAssetIndex_
         );
