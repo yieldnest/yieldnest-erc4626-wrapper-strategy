@@ -21,7 +21,6 @@ contract StakedLPStrategyDeployer {
         string accountTokenSymbol;
         uint8 decimals;
         IActors actors;
-        uint256 minDelay;
         address stakeDaoLpToken;
         Implementations implementations;
     }
