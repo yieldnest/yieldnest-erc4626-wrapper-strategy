@@ -38,6 +38,8 @@ contract StakedLPStrategy is BaseStrategy {
         _addAsset(stakeDaoLPToken_, 18, true);
     }
 
+    // TODO: Add the fee logic that exempts the StrategyAdapter from the fees.
+
     // Implement the required functions with stub returns, to be replaced with actual logic.
     function _feeOnRaw(uint256, address) public view override returns (uint256) {
         // TODO: implement fee calculation logic
