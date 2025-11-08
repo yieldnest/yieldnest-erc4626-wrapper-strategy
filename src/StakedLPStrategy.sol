@@ -7,35 +7,39 @@ import {IERC20} from "lib/yieldnest-vault/src/Common.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 
 contract StakedLPStrategy is BaseStrategy {
+    string public constant STAKED_LP_STRATEGY_VERSION = "0.1.0";
+
+    struct InitParams {
+        address admin;
+        string name;
+        string symbol;
+        uint8 decimals_;
+        bool countNativeAsset_;
+        bool alwaysComputeTotalAssets_;
+        uint256 defaultAssetIndex_;
+        address stakeDaoLPToken_;
+    }
+
     /**
      * @notice Initializes the strategy.
-     * @param admin The address of the admin.
-     * @param name The name of the vault.
-     * @param symbol The symbol of the vault.
-     * @param decimals_ The number of decimals for the vault token.
-     * @param countNativeAsset_ Whether the vault should count the native asset.
-     * @param alwaysComputeTotalAssets_ Whether the vault should always compute total assets.
-     * @param defaultAssetIndex_ The index of the default asset in the asset list.
-     * @param stakeDaoLPToken_ The address of the StakeDao token.
+     * @param params The struct containing all initialization parameters.
      */
-    function initialize(
-        address admin,
-        string memory name,
-        string memory symbol,
-        uint8 decimals_,
-        bool countNativeAsset_,
-        bool alwaysComputeTotalAssets_,
-        uint256 defaultAssetIndex_,
-        address stakeDaoLPToken_
-    ) external virtual initializer {
+    function initialize(InitParams calldata params) external virtual initializer {
         _initialize(
-            admin, name, symbol, decimals_, true, countNativeAsset_, alwaysComputeTotalAssets_, defaultAssetIndex_
+            params.admin,
+            params.name,
+            params.symbol,
+            params.decimals_,
+            true,
+            params.countNativeAsset_,
+            params.alwaysComputeTotalAssets_,
+            params.defaultAssetIndex_
         );
 
-        address curveLpToken = IStakeDaoLiquidityGauge(stakeDaoLPToken_).lp_token();
+        address curveLpToken = IStakeDaoLiquidityGauge(params.stakeDaoLPToken_).lp_token();
 
         _addAsset(curveLpToken, 18, true);
-        _addAsset(stakeDaoLPToken_, 18, true);
+        _addAsset(params.stakeDaoLPToken_, 18, false);
     }
 
     // TODO: Add the fee logic that exempts the StrategyAdapter from the fees.
@@ -51,6 +55,12 @@ contract StakedLPStrategy is BaseStrategy {
         return 0;
     }
 
+    /**
+     * @notice Returns the available assets for the strategy. for the base asset (curve LP token)
+     * it includes the balance of the curve LP token and the balance of the StakeDAO LP token.
+     * @param asset_ The asset to check.
+     * @return availableAssets The available assets.
+     */
     function _availableAssets(address asset_) internal view virtual override returns (uint256 availableAssets) {
         address[] memory assets = getAssets();
         if (asset_ == assets[0]) {
