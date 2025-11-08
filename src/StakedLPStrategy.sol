@@ -5,6 +5,7 @@ import {BaseStrategy} from "lib/yieldnest-vault/src/strategy/BaseStrategy.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {IERC20} from "lib/yieldnest-vault/src/Common.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
+import {VaultLib} from "lib/yieldnest-vault/src/library/VaultLib.sol";
 
 contract StakedLPStrategy is BaseStrategy {
     string public constant STAKED_LP_STRATEGY_VERSION = "0.1.0";
@@ -17,6 +18,7 @@ contract StakedLPStrategy is BaseStrategy {
         bool alwaysComputeTotalAssets_;
         uint256 defaultAssetIndex_;
         address stakeDaoLPToken_;
+        address provider_;
     }
 
     /**
@@ -39,6 +41,8 @@ contract StakedLPStrategy is BaseStrategy {
 
         _addAsset(curveLpToken, 18, true);
         _addAsset(params.stakeDaoLPToken_, 18, false);
+
+        VaultLib.setProvider(params.provider_);
     }
 
     // TODO: Add the fee logic that exempts the StrategyAdapter from the fees.
