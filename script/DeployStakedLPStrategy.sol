@@ -15,7 +15,7 @@ import {Script} from "forge-std/Script.sol";
 
 // forge script DeployFlexStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
 // <CAST_WALLET_ACCOUNT>  --sender <SENDER_ADDRESS>  --verify --etherscan-api-key <ETHERSCAN_API_KEY>  -vvv
-contract DeployFlexStrategy is BaseScript {
+contract DeployStakedLPStrategy is BaseScript {
     error InvalidRules();
     error InvalidRateProvider();
     error InvalidDeploymentParams(string);
