@@ -40,6 +40,7 @@ contract StakedLPStrategy is BaseStrategy {
         address curveLpToken = IStakeDaoLiquidityGauge(params.stakeDaoLPToken_).lp_token();
 
         _addAsset(curveLpToken, 18, true);
+        _setAssetWithdrawable(curveLpToken, true);
         _addAsset(params.stakeDaoLPToken_, 18, false);
 
         VaultLib.setProvider(params.provider_);
