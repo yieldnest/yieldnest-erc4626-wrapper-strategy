@@ -9,6 +9,7 @@ import {TransparentUpgradeableProxy} from "lib/yieldnest-vault/src/Common.sol";
 import {BaseRoles} from "script/roles/BaseRoles.sol";
 import {SafeRules, IVault} from "@yieldnest-vault-script/rules/SafeRules.sol";
 import {Provider} from "src/module/Provider.sol";
+import {StakedLPStrategyHooks} from "src/hooks/StakedLpStrategyHooks.sol";
 
 contract StakedLPStrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -101,6 +102,9 @@ contract StakedLPStrategyDeployer {
     function configureStrategy() internal virtual {
         BaseRoles.configureDefaultRolesStrategy(strategy, address(timelock), actors);
         BaseRoles.configureTemporaryRolesStrategy(strategy, deployer);
+
+        StakedLPStrategyHooks hooks = new StakedLPStrategyHooks(address(strategy), stakeDaoLpToken);
+        strategy.setHooks(address(hooks));
 
         strategy.unpause();
 
