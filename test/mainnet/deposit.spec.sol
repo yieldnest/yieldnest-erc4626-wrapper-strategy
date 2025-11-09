@@ -14,44 +14,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         super.setUp();
     }
 
-    function deposit_lp(address alice, uint256 depositAmount) public returns (uint256) {
-        // Deal USDC to alice
-        uint256 aliceAmount = depositAmount;
-        deal(MC.USDC, alice, aliceAmount);
-
-        // Half of alice's USDC to deposit into YNRWAX
-        uint256 halfAmount = aliceAmount / 2;
-
-        // Addresses required
-        address usdc = MC.USDC;
-        address curveLp = MC.CURVE_ynRWAx_USDC_LP;
-
-        // Use YNRWAX constant directly
-        address ynrwax = MC.YNRWAX;
-
-        // Prank as alice for interacting from her address
-        vm.startPrank(alice);
-
-        // Approve YNRWAX contract to spend USDC, then deposit half to YNRWAX
-        IERC20(usdc).approve(ynrwax, halfAmount);
-
-        IERC4626(ynrwax).deposit(halfAmount, alice);
-
-        // Interface for YNRWAX should have a deposit or mint method
-        // For the purpose of modelling, let's assume it's: function deposit(uint256 amount) public returns (uint256);
-        // (You may need to adapt this call based on actual YNR
-
-        // Approve LP pool to spend USDC and YNRWAX for adding liquidity
-        IERC20(usdc).approve(curveLp, halfAmount);
-        IERC20(ynrwax).approve(curveLp, halfAmount); // or actual balance of YNRWAX minted
-
-        // Add both tokens as liquidity to the LP (assuming it's a 2-coin pool [YNRWAX, USDC] and add_liquidity signature)
-        uint256[] memory amounts = new uint256[](2);
-        amounts[0] = halfAmount;
-        amounts[1] = halfAmount;
-        return ICurvePool(curveLp).add_liquidity(amounts, 0);
-    }
-
     function test_deposit_lp() public {
         uint256 depositAmount = 100e6;
 
@@ -130,8 +92,22 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         uint256 aliceShareBalance = IERC20(stakedLPStrategy).balanceOf(alice);
 
+        vm.stopPrank();
+
         assertEq(aliceShareBalance, shares, "Share amount mismatch after fuzz deposit");
 
-        vm.stopPrank();
+        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), 0, "Alice's stakedao LP balance mismatch");
+
+        assertEq(stakedLPStrategy.balanceOf(alice), lpBalance, "Alice's stakedao gauge balance mismatch");
+
+        assertEq(stakedLPStrategy.totalAssets(), lpBalance, "Alice's stakedao gauge total assets mismatch");
+
+        assertEq(stakedLPStrategy.totalSupply(), lpBalance, "Alice's stakedao gauge total supply mismatch");
+
+        assertEq(
+            IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_LP).balanceOf(address(stakedLPStrategy)),
+            lpBalance,
+            "Vault balance of stakedao LP mismatch"
+        );
     }
 }

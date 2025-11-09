@@ -9,6 +9,9 @@ import {MainnetContracts as MC} from "script/Contracts.sol";
 import {Provider} from "src/module/Provider.sol";
 import {DeployStakedLPStrategy} from "script/DeployStakedLPStrategy.sol";
 import {BaseScript} from "script/BaseScript.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
+import {ICurvePool} from "src/interfaces/ICurvePool.sol";
 
 contract BaseIntegrationTest is Test, AssertUtils {
     StakedLPStrategy public stakedLPStrategy;
@@ -31,5 +34,43 @@ contract BaseIntegrationTest is Test, AssertUtils {
         deployment.run();
 
         stakedLPStrategy = StakedLPStrategy(deployment.strategy());
+    }
+
+    function deposit_lp(address alice, uint256 depositAmount) public returns (uint256) {
+        // Deal USDC to alice
+        uint256 aliceAmount = depositAmount;
+        deal(MC.USDC, alice, aliceAmount);
+
+        // Half of alice's USDC to deposit into YNRWAX
+        uint256 halfAmount = aliceAmount / 2;
+
+        // Addresses required
+        address usdc = MC.USDC;
+        address curveLp = MC.CURVE_ynRWAx_USDC_LP;
+
+        // Use YNRWAX constant directly
+        address ynrwax = MC.YNRWAX;
+
+        // Prank as alice for interacting from her address
+        vm.startPrank(alice);
+
+        // Approve YNRWAX contract to spend USDC, then deposit half to YNRWAX
+        IERC20(usdc).approve(ynrwax, halfAmount);
+
+        IERC4626(ynrwax).deposit(halfAmount, alice);
+
+        // Interface for YNRWAX should have a deposit or mint method
+        // For the purpose of modelling, let's assume it's: function deposit(uint256 amount) public returns (uint256);
+        // (You may need to adapt this call based on actual YNR
+
+        // Approve LP pool to spend USDC and YNRWAX for adding liquidity
+        IERC20(usdc).approve(curveLp, halfAmount);
+        IERC20(ynrwax).approve(curveLp, halfAmount); // or actual balance of YNRWAX minted
+
+        // Add both tokens as liquidity to the LP (assuming it's a 2-coin pool [YNRWAX, USDC] and add_liquidity signature)
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = halfAmount;
+        amounts[1] = halfAmount;
+        return ICurvePool(curveLp).add_liquidity(amounts, 0);
     }
 }
