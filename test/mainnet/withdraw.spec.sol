@@ -47,6 +47,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 withdrawShares = shares;
 
         uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_LP).balanceOf(address(stakedLPStrategy));
 
         uint256 assetsWithdrawn = stakedLPStrategy.withdraw(withdrawShares, alice, alice);
 
@@ -61,6 +62,14 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Alice's share balance should reduce exactly by withdrawn shares
         uint256 aliceBalanceAfter = IERC20(stakedLPStrategy).balanceOf(alice);
         assertEq(aliceBalanceAfter, shares - withdrawShares, "Share balance did not decrease by withdrawn shares");
+
+        // Assert the StakeDao gauge LP balance in the vault decreased by assetsWithdrawn
+        uint256 postStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_LP).balanceOf(address(stakedLPStrategy));
+        assertEq(
+            postStakeDaoBalance,
+            preStakeDaoBalance - assetsWithdrawn,
+            "StakeDao LP balance in vault did not decrease by withdrawn amount"
+        );
 
         vm.stopPrank();
     }
