@@ -109,4 +109,29 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         vm.stopPrank();
     }
+
+    function testFuzz_initial_deposit_success(uint256 depositAmount) public {
+        // Fuzz bounds: 1 USDC min, 1_000_000 USDC max (6 decimals)
+        depositAmount = bound(depositAmount, 1e6, 1_000_000e6);
+
+        address alice = makeAddr("alice");
+
+        deal(MC.USDC, alice, depositAmount);
+
+        uint256 lpBalance = deposit_lp(alice, depositAmount);
+
+        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+
+        vm.startPrank(alice);
+
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+
+        uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
+
+        uint256 aliceShareBalance = IERC20(stakedLPStrategy).balanceOf(alice);
+
+        assertEq(aliceShareBalance, shares, "Share amount mismatch after fuzz deposit");
+
+        vm.stopPrank();
+    }
 }
