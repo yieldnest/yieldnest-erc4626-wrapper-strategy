@@ -14,12 +14,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         super.setUp();
     }
 
-    function testFuzz_initial_withdraw_success()
-        // uint256 depositAmount, uint256 withdrawShares
-        public
-    {
+    function testFuzz_initial_withdraw_success(uint256 depositAmount, uint256 withdrawShares) public {
         // Fuzz deposit bounds: 1 USDC min, 1_000_000 USDC max (6 decimals)
-        // depositAmount = bound(depositAmount, 1e6, 1_000_000e6);
+        depositAmount = bound(depositAmount, 1e6, 1_000_000e6);
 
         uint256 depositAmount = 100e6;
 
