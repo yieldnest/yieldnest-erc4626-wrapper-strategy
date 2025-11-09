@@ -14,12 +14,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         super.setUp();
     }
 
-    function test_deposit_lp() public {
-        uint256 depositAmount = 100e6;
-
-        // Assume 'alice' address is available (e.g. from makeAddr("alice"))
-        address alice = makeAddr("alice");
-
+    function deposit_lp(address alice, uint256 depositAmount) public {
         // Deal USDC to alice
         uint256 aliceAmount = depositAmount;
         deal(MC.USDC, alice, aliceAmount);
@@ -40,12 +35,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Approve YNRWAX contract to spend USDC, then deposit half to YNRWAX
         IERC20(usdc).approve(ynrwax, halfAmount);
 
-        // Interface for YNRWAX should have a deposit or mint method
-        // For the purpose of modelling, let's assume it's: function deposit(uint256 amount) public returns (uint256);
-        // (You may need to adapt this call based on actual YNRWAX interface)
         IERC4626(ynrwax).deposit(halfAmount, alice);
 
-        // After this, alice has (halfAmount) YNRWAX and (halfAmount) USDC
+        // Interface for YNRWAX should have a deposit or mint method
+        // For the purpose of modelling, let's assume it's: function deposit(uint256 amount) public returns (uint256);
+        // (You may need to adapt this call based on actual YNR
 
         // Approve LP pool to spend USDC and YNRWAX for adding liquidity
         IERC20(usdc).approve(curveLp, halfAmount);
@@ -56,14 +50,23 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         amounts[0] = halfAmount;
         amounts[1] = halfAmount;
         ICurvePool(curveLp).add_liquidity(amounts, 0);
+    }
+
+    function test_deposit_lp() public {
+        uint256 depositAmount = 100e6;
+
+        // Assume 'alice' address is available (e.g. from makeAddr("alice"))
+        address alice = makeAddr("alice");
+
+        deposit_lp(alice, depositAmount);
 
         address gauge = MC.STAKEDAO_CURVE_ynRWAx_USDC_LP;
 
         // Find how much LP tokens alice received (query balance)
-        uint256 lpBalance = IERC20(curveLp).balanceOf(alice);
+        uint256 lpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
 
         // Approve Gauge to spend LP tokens
-        IERC20(curveLp).approve(gauge, lpBalance);
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(gauge, lpBalance);
 
         console.log("LP balance:", lpBalance);
         // Log alice's gauge balance before deposit
@@ -76,5 +79,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         console.log("Gauge balance after:", IERC20(gauge).balanceOf(alice));
 
         vm.stopPrank();
+    }
+
+    function test_initial_deposit_success() public {
+        uint256 depositAmount = 100e6;
+
+        // Assume 'alice' address is available (e.g. from makeAddr("alice"))
+        address alice = makeAddr("alice");
+
+        // Deal USDC to alice
+        uint256 aliceAmount = depositAmount;
+        deal(MC.USDC, alice, aliceAmount);
     }
 }
