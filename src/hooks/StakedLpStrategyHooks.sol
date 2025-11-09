@@ -8,7 +8,7 @@ import {BaseVault} from "lib/yieldnest-vault/src/BaseVault.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "lib/yieldnest-vault/src/Common.sol";
 
-contract StakedLpStrategyHooks is IHooks {
+contract StakedLPStrategyHooks is IHooks {
     error NotSupported();
 
     IVault public immutable vault;

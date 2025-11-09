@@ -14,7 +14,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         super.setUp();
     }
 
-    function deposit_lp(address alice, uint256 depositAmount) public {
+    function deposit_lp(address alice, uint256 depositAmount) public returns (uint256) {
         // Deal USDC to alice
         uint256 aliceAmount = depositAmount;
         deal(MC.USDC, alice, aliceAmount);
@@ -49,7 +49,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = halfAmount;
         amounts[1] = halfAmount;
-        ICurvePool(curveLp).add_liquidity(amounts, 0);
+        return ICurvePool(curveLp).add_liquidity(amounts, 0);
     }
 
     function test_deposit_lp() public {
@@ -87,8 +87,26 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Assume 'alice' address is available (e.g. from makeAddr("alice"))
         address alice = makeAddr("alice");
 
-        // Deal USDC to alice
-        uint256 aliceAmount = depositAmount;
-        deal(MC.USDC, alice, aliceAmount);
+        deal(MC.USDC, alice, depositAmount);
+
+        uint256 lpBalance = deposit_lp(alice, depositAmount);
+
+        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+
+        vm.startPrank(alice);
+
+        // Alice approves strategy to spend her stakedao LP tokens
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+
+        console.log("Alice's LP balance:", lpBalance);
+
+        // Deposit to the strategy (assumes deposit(uint256, address) present, else update selector)
+        uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
+
+        // Alice's strategy share balance increases
+        uint256 aliceShareBalance = IERC20(stakedLPStrategy).balanceOf(alice);
+        console.log("Alice strategy share balance:", aliceShareBalance);
+
+        vm.stopPrank();
     }
 }

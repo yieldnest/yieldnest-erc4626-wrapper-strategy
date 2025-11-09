@@ -10,6 +10,10 @@ import {BaseRoles} from "script/roles/BaseRoles.sol";
 import {SafeRules, IVault} from "@yieldnest-vault-script/rules/SafeRules.sol";
 import {Provider} from "src/module/Provider.sol";
 import {StakedLPStrategyHooks} from "src/hooks/StakedLpStrategyHooks.sol";
+import {StakeDaoRules} from "script/rules/StakeDaoRules.sol";
+import {SafeRules} from "lib/yieldnest-vault/script/rules/SafeRules.sol";
+import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
+import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 
 contract StakedLPStrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -105,6 +109,19 @@ contract StakedLPStrategyDeployer {
 
         StakedLPStrategyHooks hooks = new StakedLPStrategyHooks(address(strategy), stakeDaoLpToken);
         strategy.setHooks(address(hooks));
+
+        strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
+
+        {
+            address curvePool = IStakeDaoLiquidityGauge(stakeDaoLpToken).lp_token();
+            SafeRules.RuleParams[] memory rules = new SafeRules.RuleParams[](3);
+            rules[0] = StakeDaoRules.getDepositRule(stakeDaoLpToken);
+            rules[1] = StakeDaoRules.getWithdrawRule(stakeDaoLpToken);
+            rules[2] = BaseRules.getApprovalRule(curvePool, stakeDaoLpToken);
+
+            // Set processor rules using SafeRules
+            SafeRules.setProcessorRules(IVault(address(strategy)), rules, true);
+        }
 
         strategy.unpause();
 
