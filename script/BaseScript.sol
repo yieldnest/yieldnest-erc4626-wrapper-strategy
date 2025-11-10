@@ -10,6 +10,7 @@ import {IContracts, L1Contracts} from "@yieldnest-vault-script/Contracts.sol";
 import {StakedLPStrategy} from "src/StakedLPStrategy.sol";
 import {StakedLPStrategyDeployer} from "script/StakedLPStrategyDeployer.sol";
 import {console} from "forge-std/console.sol";
+import {StrategyAdapter} from "src/StrategyAdapter.sol";
 
 abstract contract BaseScript is Script {
     using stdJson for string;
@@ -51,6 +52,7 @@ abstract contract BaseScript is Script {
 
     StakedLPStrategy public strategy;
     address public strategyProxyAdmin;
+    StrategyAdapter public strategyAdapter; // <-- Added
 
     error UnsupportedChain();
     error InvalidSetup(string);
@@ -113,6 +115,13 @@ abstract contract BaseScript is Script {
         strategy =
             StakedLPStrategy(payable(address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-proxy")))));
         strategyProxyAdmin = address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-proxyAdmin")));
+
+        // Populate strategyAdapter if field exists in JSON
+        address _strategyAdapter =
+            address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-strategyAdapter")));
+        if (_strategyAdapter != address(0)) {
+            strategyAdapter = StrategyAdapter(payable(_strategyAdapter));
+        }
     }
 
     function _deploymentFilePath(Env env) internal view virtual returns (string memory) {
@@ -136,6 +145,11 @@ abstract contract BaseScript is Script {
         vm.serializeAddress(symbol(), "stakeDaoLpToken", stakeDaoLpToken);
         vm.serializeAddress(symbol(), string.concat(symbol(), "-proxy"), address(strategy));
         vm.serializeAddress(symbol(), string.concat(symbol(), "-proxyAdmin"), strategyProxyAdmin);
+
+        // Serialize strategyAdapter address if set
+        if (address(strategyAdapter) != address(0)) {
+            vm.serializeAddress(symbol(), string.concat(symbol(), "-strategyAdapter"), address(strategyAdapter));
+        }
 
         string memory jsonOutput = symbol(); // For vm.writeJson only needs the key
 

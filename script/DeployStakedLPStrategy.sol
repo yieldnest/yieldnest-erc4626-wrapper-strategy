@@ -12,6 +12,7 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
 import {IProvider} from "lib/yieldnest-vault/src/interface/IProvider.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {Script} from "forge-std/Script.sol";
+import {StrategyAdapter} from "src/StrategyAdapter.sol";
 
 // forge script DeployFlexStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
 // <CAST_WALLET_ACCOUNT>  --sender <SENDER_ADDRESS>  --verify --etherscan-api-key <ETHERSCAN_API_KEY>  -vvv
@@ -57,6 +58,7 @@ contract DeployStakedLPStrategy is BaseScript {
         StakedLPStrategyDeployer.Implementations memory implementations;
         implementations.stakedLpStrategyImplementation = new StakedLPStrategy();
         implementations.timelockController = timelock;
+        implementations.strategyAdapterImplementation = new StrategyAdapter();
 
         StakedLPStrategyDeployer strategyDeployer = createDeployer(implementations);
         // The Deployer is the Strategy Deployer contract
@@ -76,6 +78,7 @@ contract DeployStakedLPStrategy is BaseScript {
         strategy = strategyDeployer.strategy();
         rateProvider = strategyDeployer.rateProvider();
         timelock = strategyDeployer.timelock();
+        strategyAdapter = strategyDeployer.strategyAdapter();
     }
 
     function assignDeploymentParameters() internal virtual {

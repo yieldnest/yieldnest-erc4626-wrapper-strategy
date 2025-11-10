@@ -70,4 +70,31 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         vm.stopPrank();
     }
+
+    function test_withdraw_single_sided() public {
+        address alice = makeAddr("alice");
+
+        uint256 depositAmount = 100e6;
+        deal(MC.USDC, alice, depositAmount);
+
+        uint256 lpBalance = deposit_lp(alice, depositAmount);
+
+        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+
+        vm.startPrank(alice);
+
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
+
+        assertEq(IERC20(stakedLPStrategy).balanceOf(alice), shares, "Alice's strategy shares balance mismatch");
+
+        stakedLPStrategy.approve(address(strategyAdapter), shares);
+
+        // Withdraw all shares single-sided (receiving USDC)
+        strategyAdapter.withdrawSingleSided(1e18);
+
+        assertGt(IERC20(MC.USDC).balanceOf(alice), 1e6, "Alice's USDC balance mismatch");
+
+        vm.stopPrank();
+    }
 }

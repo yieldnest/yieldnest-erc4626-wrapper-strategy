@@ -14,6 +14,7 @@ import {StakeDaoRules} from "script/rules/StakeDaoRules.sol";
 import {SafeRules} from "lib/yieldnest-vault/script/rules/SafeRules.sol";
 import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
+import {StrategyAdapter} from "src/StrategyAdapter.sol";
 
 contract StakedLPStrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -31,9 +32,11 @@ contract StakedLPStrategyDeployer {
     struct Implementations {
         StakedLPStrategy stakedLpStrategyImplementation;
         TimelockController timelockController;
+        StrategyAdapter strategyAdapterImplementation;
     }
 
     StakedLPStrategy public strategy;
+    StrategyAdapter public strategyAdapter;
 
     address public deployer;
     string public name;
@@ -95,6 +98,18 @@ contract StakedLPStrategyDeployer {
                                 provider_: address(rateProvider)
                             })
                         )
+                    )
+                )
+            )
+        );
+
+        strategyAdapter = StrategyAdapter(
+            payable(
+                address(
+                    new TransparentUpgradeableProxy(
+                        address(implementations.strategyAdapterImplementation),
+                        address(timelock),
+                        abi.encodeWithSelector(StrategyAdapter.initialize.selector, address(strategy), int128(1))
                     )
                 )
             )

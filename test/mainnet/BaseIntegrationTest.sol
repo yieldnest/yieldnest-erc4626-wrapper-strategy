@@ -12,10 +12,12 @@ import {BaseScript} from "script/BaseScript.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
+import {StrategyAdapter} from "src/StrategyAdapter.sol";
 
 contract BaseIntegrationTest is Test, AssertUtils {
     StakedLPStrategy public stakedLPStrategy;
     DeployStakedLPStrategy public deployment;
+    StrategyAdapter public strategyAdapter;
 
     address public ADMIN = makeAddr("admin");
 
@@ -34,6 +36,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
         deployment.run();
 
         stakedLPStrategy = StakedLPStrategy(deployment.strategy());
+        strategyAdapter = StrategyAdapter(deployment.strategyAdapter());
     }
 
     function deposit_lp(address alice, uint256 depositAmount) public returns (uint256) {
