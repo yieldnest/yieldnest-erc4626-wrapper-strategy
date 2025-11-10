@@ -103,4 +103,48 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         vm.stopPrank();
     }
+
+    function test_fuzz_withdraw_single_sided(uint256 depositAmount, uint256 withdrawAmount) public {
+        // depositAmount: fuzz the deposit in USDC
+        // withdrawAmount: fuzz the single-sided withdraw in shares
+        
+        address alice = makeAddr("alice");
+        // Constrain inputs to reasonable values
+        depositAmount = bound(depositAmount, 1e6, 1_000_000e6); // Between $1 and $1,000,000 USDC
+        deal(MC.USDC, alice, depositAmount);
+
+        uint256 lpBalance = deposit_lp(alice, depositAmount);
+
+        // Alice must have >0 LP balance to continue
+        vm.assume(lpBalance > 0);
+
+        vm.startPrank(alice);
+
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
+
+        assertEq(IERC20(stakedLPStrategy).balanceOf(alice), shares, "Alice's strategy shares balance mismatch");
+
+        stakedLPStrategy.approve(address(strategyAdapter), shares);
+
+        // Constrain withdrawAmount to Alice's available shares
+        withdrawAmount = bound(withdrawAmount, 1, shares);
+
+        uint256 aliceUSDCBefore = IERC20(MC.USDC).balanceOf(alice);
+
+        uint256 redeemableAmount = strategyAdapter.previewWithdrawSingleSided(withdrawAmount);
+
+        strategyAdapter.withdrawSingleSided(withdrawAmount);
+
+        uint256 aliceUSDCAfter = IERC20(MC.USDC).balanceOf(alice);
+
+        // Check Alice received USDC
+        assertEq(aliceUSDCAfter, aliceUSDCBefore + redeemableAmount, "USDC received does not match preview");
+
+        // Check shares decreased
+        uint256 aliceSharesAfter = IERC20(stakedLPStrategy).balanceOf(alice);
+        assertEq(aliceSharesAfter, shares - withdrawAmount, "Alice's shares didn't decrease by withdrawn shares");
+
+        vm.stopPrank();
+    }
 }

@@ -56,10 +56,7 @@ contract StrategyAdapter is Initializable {
         }
 
         uint256 redeemedAmount = pool.remove_liquidity_one_coin(curveLPAmount, curveAssetIndex, 0);
-
-        // STEP 2: apply extra withdrawal fee
-
-        // STEP 3: transfer the assets to the caller
+        
         address curveAsset = pool.coins(uint256(uint128(curveAssetIndex)));
 
         IERC20(curveAsset).safeTransfer(msg.sender, redeemedAmount);
