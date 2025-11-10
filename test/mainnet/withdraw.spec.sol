@@ -90,8 +90,14 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         stakedLPStrategy.approve(address(strategyAdapter), shares);
 
+        uint256 withdrawSingleSidedAmount = 1e18;
+
+        uint256 redeemableAmount = strategyAdapter.previewWithdrawSingleSided(withdrawSingleSidedAmount);
+
         // Withdraw all shares single-sided (receiving USDC)
-        strategyAdapter.withdrawSingleSided(1e18);
+        strategyAdapter.withdrawSingleSided(withdrawSingleSidedAmount);
+
+        assertEq(IERC20(MC.USDC).balanceOf(alice), redeemableAmount, "Alice's USDC balance mismatch");
 
         assertGt(IERC20(MC.USDC).balanceOf(alice), 1e6, "Alice's USDC balance mismatch");
 

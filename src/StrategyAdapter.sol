@@ -34,6 +34,14 @@ contract StrategyAdapter is Initializable {
         curveAssetIndex = _curveAssetIndex;
     }
 
+    function previewWithdrawSingleSided(uint256 curveLPAmount) public view returns (uint256 redeemableAmount) {
+        // Get the curve pool address and instance
+        ICurvePool pool = ICurvePool(stakedLPStrategy.asset());
+
+        // Preview withdrawal from Curve
+        redeemableAmount = pool.calc_withdraw_one_coin(curveLPAmount, curveAssetIndex);
+    }
+
     function withdrawSingleSided(uint256 curveLPAmount) public {
         // withdraw the staked LP tokens approved by msg.sender to receiver = address(this)
         stakedLPStrategy.withdraw(curveLPAmount, address(this), msg.sender);
@@ -54,11 +62,6 @@ contract StrategyAdapter is Initializable {
         // STEP 3: transfer the assets to the caller
         address curveAsset = pool.coins(uint256(uint128(curveAssetIndex)));
 
-        uint256 curveAssetBalance = IERC20(curveAsset).balanceOf(address(this));
-        console.log("StrategyAdapter curveAsset balance:", curveAssetBalance);
-
-        console.log("curveAsset:", curveAsset);
-        console.log("redeemedAmount:", redeemedAmount);
         IERC20(curveAsset).safeTransfer(msg.sender, redeemedAmount);
 
         emit SingleSidedWithdraw(

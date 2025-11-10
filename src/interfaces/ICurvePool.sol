@@ -5,7 +5,9 @@ pragma solidity ^0.8.24;
 interface ICurvePool {
     function get_virtual_price() external view returns (uint256);
     function add_liquidity(uint256[] calldata amounts, uint256 min_mint_amount) external payable returns (uint256);
-    function remove_liquidity(uint256 _amount, uint256[2] calldata min_amounts) external returns (uint256[2] memory);
+    function remove_liquidity(uint256 _burn_amount, uint256[2] calldata min_amounts)
+        external
+        returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 _burn_amount, int128 i, uint256 min_amount) external returns (uint256);
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
     function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
@@ -21,4 +23,6 @@ interface ICurvePool {
         returns (uint256[2] memory);
     function lp_price() external view returns (uint256);
     function name() external view returns (string memory);
+
+    function calc_withdraw_one_coin(uint256 _burn_amount, int128 i) external view returns (uint256);
 }
