@@ -95,7 +95,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 redeemableAmount = strategyAdapter.previewWithdrawSingleSided(withdrawSingleSidedAmount);
 
         // Withdraw all shares single-sided (receiving USDC)
-        strategyAdapter.withdrawSingleSided(withdrawSingleSidedAmount);
+        strategyAdapter.withdrawSingleSided(withdrawSingleSidedAmount, 0);
 
         assertEq(IERC20(MC.USDC).balanceOf(alice), redeemableAmount, "Alice's USDC balance mismatch");
 
@@ -107,7 +107,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     function test_fuzz_withdraw_single_sided(uint256 depositAmount, uint256 withdrawAmount) public {
         // depositAmount: fuzz the deposit in USDC
         // withdrawAmount: fuzz the single-sided withdraw in shares
-        
+
         address alice = makeAddr("alice");
         // Constrain inputs to reasonable values
         depositAmount = bound(depositAmount, 1e6, 1_000_000e6); // Between $1 and $1,000,000 USDC
@@ -134,7 +134,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         uint256 redeemableAmount = strategyAdapter.previewWithdrawSingleSided(withdrawAmount);
 
-        strategyAdapter.withdrawSingleSided(withdrawAmount);
+        strategyAdapter.withdrawSingleSided(withdrawAmount, 0);
 
         uint256 aliceUSDCAfter = IERC20(MC.USDC).balanceOf(alice);
 

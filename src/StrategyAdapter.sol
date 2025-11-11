@@ -20,6 +20,7 @@ contract StrategyAdapter is Initializable {
     );
 
     error InsufficientCurveLPBalance(uint256 currentCurveLPBalance, uint256 curveLPAmount);
+    error InsufficientRedeemedAmount(uint256 redeemedAmount, uint256 minOut);
 
     StakedLPStrategy public stakedLPStrategy;
     int128 public curveAssetIndex;
@@ -42,7 +43,7 @@ contract StrategyAdapter is Initializable {
         redeemableAmount = pool.calc_withdraw_one_coin(curveLPAmount, curveAssetIndex);
     }
 
-    function withdrawSingleSided(uint256 curveLPAmount) public {
+    function withdrawSingleSided(uint256 curveLPAmount, uint256 minOut) public {
         // withdraw the staked LP tokens approved by msg.sender to receiver = address(this)
         stakedLPStrategy.withdraw(curveLPAmount, address(this), msg.sender);
 
@@ -55,8 +56,12 @@ contract StrategyAdapter is Initializable {
             revert InsufficientCurveLPBalance(currentCurveLPBalance, curveLPAmount);
         }
 
-        uint256 redeemedAmount = pool.remove_liquidity_one_coin(curveLPAmount, curveAssetIndex, 0);
-        
+        uint256 redeemedAmount = pool.remove_liquidity_one_coin(curveLPAmount, curveAssetIndex, minOut);
+
+        if (redeemedAmount < minOut) {
+            revert InsufficientRedeemedAmount(redeemedAmount, minOut);
+        }
+
         address curveAsset = pool.coins(uint256(uint128(curveAssetIndex)));
 
         IERC20(curveAsset).safeTransfer(msg.sender, redeemedAmount);
