@@ -22,7 +22,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 ma_exp_time = 1010;
 
         address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
-        console.log("Pool address:", poolAddress);
+        assertNotEq(poolAddress, address(0));
     }
 
     function create_pool(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time)
@@ -59,5 +59,14 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             oracles
         );
         return poolAddress;
+    }
+
+    function test_A_50_offpeg_fee_multiplier_5() public {
+        uint256 A = 50;
+        uint256 offpegFeeMultiplier = 5e10; // 10 decimals
+        uint256 fee = 3000000;
+        uint256 ma_exp_time = 1010;
+
+        address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
 }
