@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 library MainnetContracts {
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
+    address public constant USDS = 0xdC035D45d973E3EC169d2276DDab16f1e407384F;
+
     address public constant YNRWAX = 0x01Ba69727E2860b37bc1a2bd56999c1aFb4C15D8;
 
     address public constant GHO = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
