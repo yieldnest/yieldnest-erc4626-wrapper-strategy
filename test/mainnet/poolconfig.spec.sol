@@ -9,8 +9,13 @@ import {ICurvePool} from "src/interfaces/ICurvePool.sol";
 import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {ICurveStableSwapFactoryNG} from "src/interfaces/ICurveStableSwapFactoryNG.sol";
 import {console} from "forge-std/console.sol";
+import {MockERC4626} from "lib/yieldnest-vault/test/mainnet/mocks/MockERC4626.sol";
 
 contract VaultBasicFunctionalityTest is BaseIntegrationTest {
+    // Use alice as the liquidity provider and write a generic function for depositing to the pool
+
+    address alice = address(0x1111);
+
     function setUp() public override {
         super.setUp();
     }
@@ -30,8 +35,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         returns (address)
     {
         address[] memory coins = new address[](2);
-        coins[0] = address(0x01Ba69727E2860b37bc1a2bd56999c1aFb4C15D8);
-        coins[1] = address(0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f);
+        coins[0] = MC.YNRWAX;
+        coins[1] = MC.GHO;
 
         uint8[] memory assetTypes = new uint8[](2);
         assetTypes[0] = 3;
@@ -61,6 +66,35 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         return poolAddress;
     }
 
+    function _depositToPool(address poolAddress, address alice, uint256 amount1, uint256 amount2) internal {
+        // USDC and coin order: [ynRWAx, GHO]
+        address ynRWAx = MC.YNRWAX;
+        address GHO = MC.GHO;
+
+        // Mint or allocate USDC to alice, then allocate USDC to ynRWAx via test logic (assume a swap/mint simulation)
+        deal(MC.USDC, alice, amount1);
+
+        // Simulate logic where alice allocates USDC to ynRWAx (abstracted for brevity; replace as needed)
+        // For test: directly mint ynRWAx tokens to alice, as if she swapped USDC for ynRWAx somehow.
+        deal(ynRWAx, alice, amount1);
+
+        // Also mint GHO tokens to alice for the second leg of the pair
+        deal(GHO, alice, amount2);
+
+        // alice approves the pool to spend her tokens
+        vm.startPrank(alice);
+        IERC20(ynRWAx).approve(poolAddress, amount1);
+        IERC20(GHO).approve(poolAddress, amount2);
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = amount1;
+        amounts[1] = amount2;
+
+        // Deposit them both at the same time to the pool
+        ICurvePool(poolAddress).add_liquidity(amounts, 0);
+        vm.stopPrank();
+    }
+
     function test_A_50_offpeg_fee_multiplier_5() public {
         uint256 A = 50;
         uint256 offpegFeeMultiplier = 5e10; // 10 decimals
@@ -68,5 +102,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 ma_exp_time = 1010;
 
         address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+
+        uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
+
+        _depositToPool(poolAddress, alice, 1e18, 1e18);
     }
 }
