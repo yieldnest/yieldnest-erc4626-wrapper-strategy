@@ -55,6 +55,28 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertNotEq(poolAddress, address(0));
     }
 
+    function poolTotalAssetValue(address poolAddress) public view returns (uint256) {
+        uint256[] memory balances = ICurvePool(poolAddress).get_balances();
+        uint256 totalAssetValue = 0;
+        for (uint256 i = 0; i < balances.length; i++) {
+            address asset = ICurvePool(poolAddress).coins(i);
+            totalAssetValue += MockERC4626(asset).convertToAssets(balances[i]);
+        }
+        return totalAssetValue;
+    }
+
+    function valuePerShare(address poolAddress) public view returns (uint256) {
+        uint256 totalAssetValue = poolTotalAssetValue(poolAddress);
+        uint256 totalShares = IERC20(poolAddress).totalSupply();
+        return totalAssetValue * 1e18 / totalShares;
+    }
+
+    function printPoolCoinBalances(address poolAddress) public view {
+        console.log("pool coin balances:");
+        console.log("assetA:", IERC20(address(assetA)).balanceOf(poolAddress));
+        console.log("assetB:", IERC20(address(assetB)).balanceOf(poolAddress));
+    }
+
     function test_create_pool_withdraw_liquidity_one_coin() public {
         uint256 A = 120;
         uint256 fee = 3000000;
@@ -72,8 +94,42 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         console.log("lpBalance:", lpBalance);
 
-        // uint256 redeemableAmount = ICurvePool(MC.CURVE_ynRWAx_USDC_LP).calc_withdraw_one_coin(lpBalance, 1);
-        // assertEq(redeemableAmount, amount, "Redeemable amount mismatch");
+        // Log pool price before and after withdrawing liquidity
+        uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
+        console.log("virtual price before:", ICurvePool(poolAddress).get_virtual_price());
+        console.log("value per share before:", valuePerShare(poolAddress));
+        console.log("total asset value before:", poolTotalAssetValue(poolAddress));
+
+        vm.startPrank(alice);
+        uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
+        vm.stopPrank();
+
+        uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
+        console.log("redeemableAmount:", redeemableAmount);
+        console.log("assetB delta for alice:", int256(afterBalance) - int256(beforeBalance));
+        console.log("lpBalance after redeem:", IERC20(poolAddress).balanceOf(alice));
+        console.log("virtual price after:",  ICurvePool(poolAddress).get_virtual_price());
+        console.log("total asset value after:", poolTotalAssetValue(poolAddress));
+        console.log("value per share after:", valuePerShare(poolAddress));
+        console.log("alice balance for assetB:", IERC20(address(assetB)).balanceOf(alice));
+
+        printPoolCoinBalances(poolAddress);
+        {
+            // Deposit 1e18 of assetB (after gaining it by depositing USDS)
+            deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
+            vm.startPrank(alice);
+            IERC20(address(assetB)).approve(poolAddress, 1e18);
+            uint256[] memory depositAmounts = new uint256[](2);
+            depositAmounts[0] = 0;
+            depositAmounts[1] = 1e18;
+            ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
+            vm.stopPrank();
+        }
+        console.log("valuePerShare after re-adding assetB:", valuePerShare(poolAddress));
+        console.log("virtual price after re-adding assetB:", ICurvePool(poolAddress).get_virtual_price());
+
+        printPoolCoinBalances(poolAddress);
+
     }
 
     function create_pool(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time)
