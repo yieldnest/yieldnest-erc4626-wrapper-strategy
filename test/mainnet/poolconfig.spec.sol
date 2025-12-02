@@ -171,6 +171,62 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         printPoolCoinBalances(poolAddress);
     }
 
+    function test_create_pool_loop_withdraw_liquidity_one_coin() public {
+        uint256 A = 120;
+        uint256 fee = 3000000;
+        uint256 offpegFeeMultiplier = 120000000000;
+        uint256 ma_exp_time = 1010;
+
+        address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+        assertNotEq(poolAddress, address(0));
+
+        uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
+
+        _depositToPool(poolAddress, alice, 1e18, 1e18);
+
+        uint256 lpBalance = IERC20(poolAddress).balanceOf(alice);
+
+        console.log("lpBalance:", lpBalance);
+
+        // Log pool price before and after withdrawing liquidity
+        uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
+        printPoolStats(getPoolStats(poolAddress, alice, 1e18, 1));
+
+        for (uint256 i = 0; i < 10; i++) {
+            console.log("Iteration:", i);
+
+            vm.startPrank(alice);
+            uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
+            vm.stopPrank();
+
+            uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
+            PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(stats);
+            printPoolCoinBalances(poolAddress);
+            {
+                // Deposit 1e18 of assetB (after gaining it by depositing USDS)
+                deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
+                vm.startPrank(alice);
+                IERC20(address(assetB)).approve(poolAddress, 1e18);
+                uint256[] memory depositAmounts = new uint256[](2);
+                depositAmounts[0] = 0;
+                depositAmounts[1] = 1e18;
+                ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
+                vm.stopPrank();
+            }
+
+            PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterReAdd);
+            assertGt(
+                statsAfterReAdd.virtualPriceAfter,
+                stats.virtualPriceAfter,
+                "Virtual price should increase after re-adding assetB"
+            );
+
+            printPoolCoinBalances(poolAddress);
+        }
+    }
+
     function create_pool(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time)
         public
         returns (address)
