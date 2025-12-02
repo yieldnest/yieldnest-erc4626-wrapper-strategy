@@ -77,6 +77,48 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         console.log("assetB:", IERC20(address(assetB)).balanceOf(poolAddress));
     }
 
+    struct PoolStats {
+        uint256 redeemableAmount;
+        int256 assetBDelta;
+        uint256 lpBalanceAfterRedeem;
+        uint256 virtualPriceAfter;
+        uint256 totalAssetValueAfter;
+        uint256 valuePerShareAfter;
+        uint256 aliceAssetBBalance;
+    }
+
+    function getPoolStats(address poolAddress, address alice, uint256, /*withdrawAmount*/ uint8 coinIndex)
+        public
+        view
+        returns (PoolStats memory)
+    {
+        PoolStats memory stats;
+
+        // Just read pool/account stats (no state changes)
+        uint256 balance = IERC20(ICurvePool(poolAddress).coins(coinIndex)).balanceOf(alice);
+
+        stats.redeemableAmount = 0; // Cannot preview redeemable amount without a view function; set to 0 as a placeholder
+        stats.assetBDelta = 0; // Cannot simulate delta in pure view; set to 0 as a placeholder
+        stats.lpBalanceAfterRedeem = IERC20(poolAddress).balanceOf(alice);
+        stats.virtualPriceAfter = ICurvePool(poolAddress).get_virtual_price();
+        stats.totalAssetValueAfter = poolTotalAssetValue(poolAddress);
+        stats.valuePerShareAfter = valuePerShare(poolAddress);
+        stats.aliceAssetBBalance = balance;
+
+        return stats;
+    }
+
+    function printPoolStats(PoolStats memory stats) public view {
+        console.log("Pool Stats:");
+        console.log("  redeemableAmount:", stats.redeemableAmount);
+        console.log("  assetBDelta:", stats.assetBDelta);
+        console.log("  lpBalanceAfterRedeem:", stats.lpBalanceAfterRedeem);
+        console.log("  virtualPrice:", stats.virtualPriceAfter);
+        console.log("  totalAssetValue:", stats.totalAssetValueAfter);
+        console.log("  valuePerShare:", stats.valuePerShareAfter);
+        console.log("  aliceAssetBBalance:", stats.aliceAssetBBalance);
+    }
+
     function test_create_pool_withdraw_liquidity_one_coin() public {
         uint256 A = 120;
         uint256 fee = 3000000;
@@ -96,23 +138,15 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         // Log pool price before and after withdrawing liquidity
         uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
-        console.log("virtual price before:", ICurvePool(poolAddress).get_virtual_price());
-        console.log("value per share before:", valuePerShare(poolAddress));
-        console.log("total asset value before:", poolTotalAssetValue(poolAddress));
+        printPoolStats(getPoolStats(poolAddress, alice, 1e18, 1));
 
         vm.startPrank(alice);
         uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
         vm.stopPrank();
 
         uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
-        console.log("redeemableAmount:", redeemableAmount);
-        console.log("assetB delta for alice:", int256(afterBalance) - int256(beforeBalance));
-        console.log("lpBalance after redeem:", IERC20(poolAddress).balanceOf(alice));
-        console.log("virtual price after:",  ICurvePool(poolAddress).get_virtual_price());
-        console.log("total asset value after:", poolTotalAssetValue(poolAddress));
-        console.log("value per share after:", valuePerShare(poolAddress));
-        console.log("alice balance for assetB:", IERC20(address(assetB)).balanceOf(alice));
-
+        PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
+        printPoolStats(stats);
         printPoolCoinBalances(poolAddress);
         {
             // Deposit 1e18 of assetB (after gaining it by depositing USDS)
@@ -125,11 +159,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
             vm.stopPrank();
         }
-        console.log("valuePerShare after re-adding assetB:", valuePerShare(poolAddress));
-        console.log("virtual price after re-adding assetB:", ICurvePool(poolAddress).get_virtual_price());
+
+        PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
+        printPoolStats(statsAfterReAdd);
+        assertGt(
+            statsAfterReAdd.virtualPriceAfter,
+            stats.virtualPriceAfter,
+            "Virtual price should increase after re-adding assetB"
+        );
 
         printPoolCoinBalances(poolAddress);
-
     }
 
     function create_pool(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time)
