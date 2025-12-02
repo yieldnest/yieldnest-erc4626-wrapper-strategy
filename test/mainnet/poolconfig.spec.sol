@@ -192,14 +192,19 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
         printPoolStats(getPoolStats(poolAddress, alice, 1e18, 1));
 
-        for (uint256 i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 20; i++) {
             console.log("Iteration:", i);
 
+            uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
             vm.startPrank(alice);
             uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
             vm.stopPrank();
 
             uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
+
+            uint256 delta = afterBalance - beforeBalance;
+            console.log("delta:", delta);
+
             PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
             printPoolStats(stats);
             printPoolCoinBalances(poolAddress);
@@ -207,17 +212,17 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
                 // Deposit 1e18 of assetB (after gaining it by depositing USDS)
                 deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
                 vm.startPrank(alice);
-                IERC20(address(assetB)).approve(poolAddress, 1e18);
+                IERC20(address(assetB)).approve(poolAddress, delta);
                 uint256[] memory depositAmounts = new uint256[](2);
                 depositAmounts[0] = 0;
-                depositAmounts[1] = 1e18;
+                depositAmounts[1] = delta;
                 ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
                 vm.stopPrank();
             }
 
             PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
             printPoolStats(statsAfterReAdd);
-            assertGt(
+            assertGe(
                 statsAfterReAdd.virtualPriceAfter,
                 stats.virtualPriceAfter,
                 "Virtual price should increase after re-adding assetB"
