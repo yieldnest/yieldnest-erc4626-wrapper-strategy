@@ -110,13 +110,13 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
     function printPoolStats(PoolStats memory stats) public view {
         console.log("Pool Stats:");
-        console.log("  redeemableAmount:", stats.redeemableAmount);
-        console.log("  assetBDelta:", stats.assetBDelta);
-        console.log("  lpBalanceAfterRedeem:", stats.lpBalanceAfterRedeem);
-        console.log("  virtualPrice:", stats.virtualPriceAfter);
-        console.log("  totalAssetValue:", stats.totalAssetValueAfter);
+        // console.log("  redeemableAmount:", stats.redeemableAmount);
+        // console.log("  assetBDelta:", stats.assetBDelta);
+        // console.log("  lpBalanceAfterRedeem:", stats.lpBalanceAfterRedeem);
+        // console.log("  virtualPrice:", stats.virtualPriceAfter);
+        // console.log("  totalAssetValue:", stats.totalAssetValueAfter);
         console.log("  valuePerShare:", stats.valuePerShareAfter);
-        console.log("  aliceAssetBBalance:", stats.aliceAssetBBalance);
+        // console.log("  aliceAssetBBalance:", stats.aliceAssetBBalance);
     }
 
     function test_create_pool_withdraw_liquidity_one_coin() public {
@@ -138,15 +138,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         // Log pool price before and after withdrawing liquidity
         uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
-        printPoolStats(getPoolStats(poolAddress, alice, 1e18, 1));
+        PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+        printPoolStats(statsBeforeRemovingLiquidity);
 
         vm.startPrank(alice);
         uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
         vm.stopPrank();
 
         uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
-        PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
-        printPoolStats(stats);
+        PoolStats memory statsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+        printPoolStats(statsAfterRemovingLiquidity);
         printPoolCoinBalances(poolAddress);
         {
             // Deposit 1e18 of assetB (after gaining it by depositing USDS)
@@ -160,11 +161,13 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             vm.stopPrank();
         }
 
+        PoolStats memory postStatsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+
         PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
         printPoolStats(statsAfterReAdd);
         assertGt(
             statsAfterReAdd.virtualPriceAfter,
-            stats.virtualPriceAfter,
+            statsAfterRemovingLiquidity.virtualPriceAfter,
             "Virtual price should increase after re-adding assetB"
         );
 
@@ -190,7 +193,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         // Log pool price before and after withdrawing liquidity
         uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
-        printPoolStats(getPoolStats(poolAddress, alice, 1e18, 1));
+
+        PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+        printPoolStats(statsBeforeRemovingLiquidity);
 
         for (uint256 i = 0; i < 20; i++) {
             console.log("Iteration:", i);
@@ -228,8 +233,23 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
                 "Virtual price should increase after re-adding assetB"
             );
 
+            uint256 increasePercentageAfterRemoval = (
+                stats.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter
+            ) * 10000 / statsBeforeRemovingLiquidity.valuePerShareAfter;
+
+            console.log("increasePercentageAfterRemoval:", _toPercentString(increasePercentageAfterRemoval));
+
+            uint256 increasePercentageAfterReAdd = (
+                statsAfterReAdd.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter
+            ) * 10000 / statsBeforeRemovingLiquidity.valuePerShareAfter;
+
+            console.log("increasePercentageAfterReAdd:", _toPercentString(increasePercentageAfterReAdd));
             printPoolCoinBalances(poolAddress);
         }
+    }
+
+    function _toPercentString(uint256 basisPoints) internal pure returns (string memory) {
+        return string(abi.encodePacked(vm.toString(basisPoints / 100), ".", vm.toString(basisPoints % 100), "%"));
     }
 
     function create_pool(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time)
