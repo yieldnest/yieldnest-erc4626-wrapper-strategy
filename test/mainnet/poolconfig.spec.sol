@@ -113,7 +113,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // console.log("  redeemableAmount:", stats.redeemableAmount);
         // console.log("  assetBDelta:", stats.assetBDelta);
         // console.log("  lpBalanceAfterRedeem:", stats.lpBalanceAfterRedeem);
-        // console.log("  virtualPrice:", stats.virtualPriceAfter);
+        console.log("  virtualPrice:", stats.virtualPriceAfter);
         // console.log("  totalAssetValue:", stats.totalAssetValueAfter);
         console.log("  valuePerShare:", stats.valuePerShareAfter);
         // console.log("  aliceAssetBBalance:", stats.aliceAssetBBalance);
