@@ -197,7 +197,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
         printPoolStats(statsBeforeRemovingLiquidity);
 
-        for (uint256 i = 0; i < 100; i++) {
+        for (uint256 i = 0; i < 200; i++) {
             console.log("Iteration:", i);
 
             uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
