@@ -180,6 +180,29 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 offpegFeeMultiplier = 120000000000;
         uint256 ma_exp_time = 1010;
 
+        runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
+    }
+
+    function test_create_pool_A_50_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
+        uint256 A = 50;
+        uint256 fee = 1000000;
+        uint256 offpegFeeMultiplier = 120000000000;
+        uint256 ma_exp_time = 1010;
+
+        runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
+    }
+
+    function test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
+        uint256 A = 150; // A = 150
+        uint256 fee = 1000000; // FEE = 0.01%
+        uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
+        uint256 ma_exp_time = 1010;
+
+        runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
+    }
+
+
+    function runLoopWithParams(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time) public {
         address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
         assertNotEq(poolAddress, address(0));
 
@@ -342,5 +365,110 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
 
         _depositToPool(poolAddress, alice, 1e18, 1e18);
+    }
+
+
+    function test_create_pool__assetA_assetB_withdraw_liquidity_one_coin() public {
+        uint256 A = 120;
+        uint256 fee = 3000000;
+        uint256 offpegFeeMultiplier = 120000000000;
+        uint256 ma_exp_time = 1010;
+
+        address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+        assertNotEq(poolAddress, address(0));
+
+        {
+
+            uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
+
+            _depositToPool(poolAddress, alice, 1e18, 1e18);
+
+            uint256 lpBalance = IERC20(poolAddress).balanceOf(alice);
+
+            console.log("lpBalance:", lpBalance);
+
+            // Log pool price before and after withdrawing liquidity
+            uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
+            PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsBeforeRemovingLiquidity);
+
+            vm.startPrank(alice);
+            uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
+            vm.stopPrank();
+
+            uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
+            PoolStats memory statsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterRemovingLiquidity);
+            printPoolCoinBalances(poolAddress);
+            {
+                // Deposit 1e18 of assetB (after gaining it by depositing USDS)
+                deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
+                vm.startPrank(alice);
+                IERC20(address(assetB)).approve(poolAddress, 1e18);
+                uint256[] memory depositAmounts = new uint256[](2);
+                depositAmounts[0] = 0;
+                depositAmounts[1] = 1e18;
+                ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
+                vm.stopPrank();
+            }
+
+            PoolStats memory postStatsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+
+            PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterReAdd);
+            assertGt(
+                statsAfterReAdd.virtualPriceAfter,
+                statsAfterRemovingLiquidity.virtualPriceAfter,
+                "Virtual price should increase after re-adding assetB"
+            );
+
+            printPoolCoinBalances(poolAddress);
+        }
+
+        {
+            uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
+
+            uint256 lpBalance = IERC20(poolAddress).balanceOf(alice);
+
+            console.log("lpBalance:", lpBalance);
+
+            // Log pool price before and after withdrawing liquidity
+            uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
+            PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsBeforeRemovingLiquidity);
+
+            console.log("Removing liquidity from assetA");
+            vm.startPrank(alice);
+            uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 0, 0);
+            vm.stopPrank();
+
+            uint256 afterBalance = IERC20(address(assetA)).balanceOf(alice);
+            PoolStats memory statsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterRemovingLiquidity);
+            printPoolCoinBalances(poolAddress);
+            {
+                // Deposit 1e18 of assetA (after gaining it by depositing USDS)
+                deal(address(assetA), alice, 1e18); // Give alice 1e18 assetB tokens directly
+                vm.startPrank(alice);
+                IERC20(address(assetA)).approve(poolAddress, 1e18);
+                uint256[] memory depositAmounts = new uint256[](2);
+                depositAmounts[0] = 1e18;
+                depositAmounts[1] = 0;
+                ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
+                vm.stopPrank();
+            }
+
+            PoolStats memory postStatsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+
+            PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterReAdd);
+            assertGt(
+                statsAfterReAdd.virtualPriceAfter,
+                statsAfterRemovingLiquidity.virtualPriceAfter,
+                "Virtual price should increase after re-adding assetA"
+            );
+
+            printPoolCoinBalances(poolAddress);
+        }
     }
 }
