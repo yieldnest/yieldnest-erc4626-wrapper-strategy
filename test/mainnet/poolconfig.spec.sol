@@ -476,4 +476,141 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             printPoolCoinBalances(poolAddress);
         }
     }
+
+    function deposit_to_assets_and_boost_rate(address poolAddress) public {
+        uint256 amount1 = 100e18;
+        uint256 amount2 = 100e18;
+
+        uint256 donationAmount1 = 10e18;
+        uint256 donationAmount2 = 11e18;
+
+        // USDC and coin order: [ynRWAx, GHO]
+        address assetA = ICurvePool(poolAddress).coins(0);
+        address assetB = ICurvePool(poolAddress).coins(1);
+
+        uint256 assetAShares;
+        uint256 assetBShares;
+
+        {
+            deal(baseAsset, alice, amount1);
+
+            vm.startPrank(alice);
+            // Deposit amount1 to assetA using ERC4626, store returned shares
+            IERC20(baseAsset).approve(address(assetA), amount1);
+            assetAShares = IERC4626(assetA).deposit(amount1, alice);
+            vm.stopPrank();
+
+            deal(baseAsset, alice, donationAmount1);
+            vm.startPrank(alice);
+            IERC20(baseAsset).transfer(address(assetA), donationAmount1);
+            vm.stopPrank();
+        }
+
+        {
+            // Mint or allocate USDC to alice, then allocate USDC to ynRWAx via test logic (assume a swap/mint simulation)
+            deal(baseAsset, alice, amount2);
+
+            vm.startPrank(alice);
+            // Deposit amount2 to assetB using ERC4626, store returned shares
+            IERC20(baseAsset).approve(address(assetB), amount2);
+            assetBShares = IERC4626(assetB).deposit(amount2, alice);
+            vm.stopPrank();
+
+            deal(baseAsset, alice, donationAmount2);
+            vm.startPrank(alice);
+            IERC20(baseAsset).transfer(address(assetB), donationAmount2);
+            vm.stopPrank();
+        }
+    }
+
+    function test_redee_and_arb() public {
+        uint256 A = 20; // A = 20
+        uint256 fee = 10000000; // FEE = 0.1%
+        uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
+        uint256 ma_exp_time = 1010;
+
+        address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+        assertNotEq(poolAddress, address(0));
+
+        deposit_to_assets_and_boost_rate(poolAddress);
+
+        {
+
+            uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
+
+            _depositToPool(poolAddress, alice, 1e18, 1e18);
+
+            uint256 lpBalance = IERC20(poolAddress).balanceOf(alice);
+
+            console.log("lpBalance:", lpBalance);
+
+            // Log pool price before and after withdrawing liquidity
+            uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
+            PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsBeforeRemovingLiquidity);
+
+            vm.startPrank(alice);
+            uint256 redeemableAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(5e17, 1, 0);
+            vm.stopPrank();
+
+            uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
+            PoolStats memory statsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterRemovingLiquidity);
+            printPoolCoinBalances(poolAddress);
+
+            {
+                // Show the value of Alice's LP tokens using valuePerShareAfter
+                uint256 aliceLpBalance = IERC20(poolAddress).balanceOf(alice);
+                uint256 aliceLpValue = aliceLpBalance * statsAfterRemovingLiquidity.valuePerShareAfter / 1e18;
+                console.log("aliceLpBalance:", aliceLpBalance);
+                console.log("aliceLpValue (using valuePerShareAfter):", aliceLpValue);
+            }
+
+            uint256 assetBSharesReceived;
+            {
+
+                vm.startPrank(alice);
+                uint256 redeemedAssetAAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e17, 0, 0);
+                vm.stopPrank();
+
+                // Use redeemedAssetAAmount of assetA, redeem it for baseAsset and deposit that into assetB
+                vm.startPrank(alice);
+                IERC20(address(assetA)).approve(address(assetA), redeemedAssetAAmount);
+                uint256 baseAssetReceived = IERC4626(assetA).redeem(redeemedAssetAAmount, alice, alice);
+
+                // Now, deposit the baseAsset received into assetB
+                IERC20(baseAsset).approve(address(assetB), baseAssetReceived);
+                assetBSharesReceived = IERC4626(assetB).deposit(baseAssetReceived, alice);
+                vm.stopPrank();
+            }
+            {
+                // Deposit 1e18 of assetB (after gaining it by depositing USDS)
+                // deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
+                vm.startPrank(alice);
+                IERC20(address(assetB)).approve(poolAddress, assetBSharesReceived);
+                uint256[] memory depositAmounts = new uint256[](2);
+                depositAmounts[0] = 0;
+                depositAmounts[1] = assetBSharesReceived;
+                ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
+                vm.stopPrank();
+            }
+            PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
+            printPoolStats(statsAfterReAdd);
+            assertGt(
+                statsAfterReAdd.virtualPriceAfter,
+                statsAfterRemovingLiquidity.virtualPriceAfter,
+                "Virtual price should increase after re-adding assetB"
+            );
+
+            printPoolCoinBalances(poolAddress);
+
+            {
+                // Show the value of Alice's LP tokens using valuePerShareAfter
+                uint256 aliceLpBalance = IERC20(poolAddress).balanceOf(alice);
+                uint256 aliceLpValue = aliceLpBalance * statsAfterReAdd.valuePerShareAfter / 1e18;
+                console.log("aliceLpBalance:", aliceLpBalance);
+                console.log("aliceLpValue (using valuePerShareAfter):", aliceLpValue);
+            }
+        }
+    }
 }
