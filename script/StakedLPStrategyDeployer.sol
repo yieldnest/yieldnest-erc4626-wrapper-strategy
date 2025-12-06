@@ -79,8 +79,7 @@ contract StakedLPStrategyDeployer {
         // Adapt initialization to match StakedLPStrategy.InitParams
         // See StakedLPStrategy.sol for the correct order/fields.
         strategy = StakedLPStrategy(
-            payable(
-                address(
+            payable(address(
                     new TransparentUpgradeableProxy(
                         address(implementations.stakedLpStrategyImplementation),
                         address(timelock),
@@ -99,20 +98,17 @@ contract StakedLPStrategyDeployer {
                             })
                         )
                     )
-                )
-            )
+                ))
         );
 
         strategyAdapter = StrategyAdapter(
-            payable(
-                address(
+            payable(address(
                     new TransparentUpgradeableProxy(
                         address(implementations.strategyAdapterImplementation),
                         address(timelock),
                         abi.encodeWithSelector(StrategyAdapter.initialize.selector, address(strategy), int128(1))
                     )
-                )
-            )
+                ))
         );
 
         configureStrategy();

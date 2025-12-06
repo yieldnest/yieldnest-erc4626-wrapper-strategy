@@ -126,9 +126,10 @@ abstract contract BaseScript is Script {
 
     function _deploymentFilePath(Env env) internal view virtual returns (string memory) {
         if (env == Env.PROD) {
-            return string.concat(
-                vm.projectRoot(), "/deployments/", symbol(), "-", Strings.toString(block.chainid), ".json"
-            );
+            return
+                string.concat(
+                    vm.projectRoot(), "/deployments/", symbol(), "-", Strings.toString(block.chainid), ".json"
+                );
         }
 
         return string.concat(
