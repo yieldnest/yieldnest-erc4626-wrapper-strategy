@@ -111,11 +111,11 @@ contract StakedLPStrategyDeployer {
         strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
 
         {
-            address curvePool = IStakeDaoLiquidityGauge(stakeDaoLpToken).lp_token();
+            address curvePoolLpToken = IStakeDaoLiquidityGauge(stakeDaoLpToken).lp_token();
             SafeRules.RuleParams[] memory rules = new SafeRules.RuleParams[](3);
             rules[0] = StakeDaoRules.getDepositRule(stakeDaoLpToken);
             rules[1] = StakeDaoRules.getWithdrawRule(stakeDaoLpToken);
-            rules[2] = BaseRules.getApprovalRule(curvePool, stakeDaoLpToken);
+            rules[2] = BaseRules.getApprovalRule(curvePoolLpToken, stakeDaoLpToken);
 
             // Set processor rules using SafeRules
             SafeRules.setProcessorRules(IVault(address(strategy)), rules, true);

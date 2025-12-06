@@ -44,9 +44,8 @@ contract StakedLPStrategyHooks is IHooks {
 
     /**
      * @notice Sets the hooks configuration
-     * @param config_ The configuration struct containing hook permissions
      */
-    function setConfig(Config memory config_) external override {
+    function setConfig(Config memory) external pure override {
         revert NotSupported();
     }
 
@@ -54,7 +53,7 @@ contract StakedLPStrategyHooks is IHooks {
      * @notice Gets the current hooks configuration
      * @return The configuration struct containing hook permissions
      */
-    function getConfig() external view override returns (Config memory) {
+    function getConfig() external pure override returns (Config memory) {
         return Config({
             beforeDeposit: false,
             afterDeposit: true,
