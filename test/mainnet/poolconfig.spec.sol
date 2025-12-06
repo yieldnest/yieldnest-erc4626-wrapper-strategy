@@ -87,7 +87,13 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 aliceAssetBBalance;
     }
 
-    function getPoolStats(address poolAddress, address alice, uint256, /*withdrawAmount*/ uint8 coinIndex)
+    function getPoolStats(
+        address poolAddress,
+        address alice,
+        uint256,
+        /*withdrawAmount*/
+        uint8 coinIndex
+    )
         public
         view
         returns (PoolStats memory)
@@ -193,14 +199,13 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     }
 
     function test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
-        uint256 A = 150; // A = 150
-        uint256 fee = 1000000; // FEE = 0.01%
+        uint256 A = 20; // A = 20
+        uint256 fee = 10000000; // FEE = 0.1%
         uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
         uint256 ma_exp_time = 1010;
 
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
-
 
     function runLoopWithParams(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time) public {
         address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
@@ -256,15 +261,15 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
                 "Virtual price should increase after re-adding assetB"
             );
 
-            uint256 increasePercentageAfterRemoval = (
-                stats.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter
-            ) * 10000 / statsBeforeRemovingLiquidity.valuePerShareAfter;
+            uint256 increasePercentageAfterRemoval =
+                (stats.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter) * 10000
+                    / statsBeforeRemovingLiquidity.valuePerShareAfter;
 
             console.log("increasePercentageAfterRemoval:", _toPercentString(increasePercentageAfterRemoval));
 
-            uint256 increasePercentageAfterReAdd = (
-                statsAfterReAdd.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter
-            ) * 10000 / statsBeforeRemovingLiquidity.valuePerShareAfter;
+            uint256 increasePercentageAfterReAdd =
+                (statsAfterReAdd.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter) * 10000
+                    / statsBeforeRemovingLiquidity.valuePerShareAfter;
 
             console.log("increasePercentageAfterReAdd:", _toPercentString(increasePercentageAfterReAdd));
             printPoolCoinBalances(poolAddress);
@@ -295,19 +300,20 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         oracles[0] = address(0x0000000000000000000000000000000000000000);
         oracles[1] = address(0x0000000000000000000000000000000000000000);
 
-        address poolAddress = ICurveStableSwapFactoryNG(MC.CURVE_STABLE_SWAP_FACTORY_NG).deploy_plain_pool(
-            "AA/AB-test-pool",
-            "TynAB",
-            coins,
-            A,
-            fee,
-            offpegFeeMultiplier,
-            ma_exp_time,
-            0,
-            assetTypes,
-            methodIds,
-            oracles
-        );
+        address poolAddress = ICurveStableSwapFactoryNG(MC.CURVE_STABLE_SWAP_FACTORY_NG)
+            .deploy_plain_pool(
+                "AA/AB-test-pool",
+                "TynAB",
+                coins,
+                A,
+                fee,
+                offpegFeeMultiplier,
+                ma_exp_time,
+                0,
+                assetTypes,
+                methodIds,
+                oracles
+            );
         return poolAddress;
     }
 
@@ -366,7 +372,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         _depositToPool(poolAddress, alice, 1e18, 1e18);
     }
-
 
     function test_create_pool__assetA_assetB_withdraw_liquidity_one_coin() public {
         uint256 A = 120;
