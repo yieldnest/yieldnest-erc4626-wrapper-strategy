@@ -12,7 +12,7 @@ import {BaseScript} from "script/BaseScript.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
-import {StrategyAdapter} from "src/StrategyAdapter.sol";
+import {StrategyAdapter} from "test/helpers/StrategyAdapter.sol";
 
 contract BaseIntegrationTest is Test, AssertUtils {
     StakedLPStrategy public stakedLPStrategy;
@@ -36,7 +36,11 @@ contract BaseIntegrationTest is Test, AssertUtils {
         deployment.run();
 
         stakedLPStrategy = StakedLPStrategy(deployment.strategy());
-        strategyAdapter = StrategyAdapter(deployment.strategyAdapter());
+
+        // Deploy the StrategyAdapter as a proxy, then call initialize after
+        strategyAdapter =
+            StrategyAdapter(address(new TransparentUpgradeableProxy(address(new StrategyAdapter()), ADMIN, "")));
+        strategyAdapter.initialize(address(stakedLPStrategy), 1); // Use the correct index if needed
     }
 
     function deposit_lp(address alice, uint256 depositAmount) public returns (uint256) {

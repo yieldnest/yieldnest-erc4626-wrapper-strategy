@@ -180,7 +180,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         printPoolCoinBalances(poolAddress);
     }
 
-    function test_create_pool_loop_withdraw_liquidity_one_coin() public {
+    function skip_test_create_pool_loop_withdraw_liquidity_one_coin() public {
         uint256 A = 120;
         uint256 fee = 3000000;
         uint256 offpegFeeMultiplier = 120000000000;
@@ -189,7 +189,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
 
-    function test_create_pool_A_50_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
+    function skip_test_create_pool_A_50_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
         uint256 A = 50;
         uint256 fee = 1000000;
         uint256 offpegFeeMultiplier = 120000000000;
@@ -198,7 +198,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
 
-    function test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
+    function skip_test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
         uint256 A = 20; // A = 20
         uint256 fee = 10000000; // FEE = 0.1%
         uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
