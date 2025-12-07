@@ -558,11 +558,10 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             printPoolStats(statsAfterRemovingLiquidity);
             printPoolCoinBalances(poolAddress);
 
+            uint256 aliceLpBalanceBefore = IERC20(poolAddress).balanceOf(alice);
             {
-                // Show the value of Alice's LP tokens using valuePerShareAfter
-                uint256 aliceLpBalance = IERC20(poolAddress).balanceOf(alice);
-                uint256 aliceLpValue = aliceLpBalance * statsAfterRemovingLiquidity.valuePerShareAfter / 1e18;
-                console.log("aliceLpBalance:", aliceLpBalance);
+                uint256 aliceLpValue = aliceLpBalanceBefore * statsAfterRemovingLiquidity.valuePerShareAfter / 1e18;
+                console.log("aliceLpBalance:", aliceLpBalanceBefore);
                 console.log("aliceLpValue (using valuePerShareAfter):", aliceLpValue);
             }
 
@@ -575,7 +574,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
                 // Use redeemedAssetAAmount of assetA, redeem it for baseAsset and deposit that into assetB
                 vm.startPrank(alice);
-                IERC20(address(assetA)).approve(address(assetA), redeemedAssetAAmount);
                 uint256 baseAssetReceived = IERC4626(assetA).redeem(redeemedAssetAAmount, alice, alice);
 
                 // Now, deposit the baseAsset received into assetB
@@ -610,6 +608,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
                 uint256 aliceLpValue = aliceLpBalance * statsAfterReAdd.valuePerShareAfter / 1e18;
                 console.log("aliceLpBalance:", aliceLpBalance);
                 console.log("aliceLpValue (using valuePerShareAfter):", aliceLpValue);
+                assertGt(
+                    aliceLpBalance, aliceLpBalanceBefore, "Alice's LP balance should increase after re-adding assetB"
+                );
             }
         }
     }
