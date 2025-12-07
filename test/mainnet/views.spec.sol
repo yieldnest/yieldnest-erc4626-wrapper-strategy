@@ -23,26 +23,32 @@ contract VaultViewsTest is BaseIntegrationTest {
         assertEq(decimals, 18, "Vault decimals should be 18");
 
         string memory name = stakedLPStrategy.name();
-        assertGt(bytes(name).length, 0, "Vault name should not be empty");
+        assertEq(name, "Staked LP Strategy ynRWAx-USDC", "Vault name should match the expected name exactly");
 
         string memory symbol = stakedLPStrategy.symbol();
-        assertGt(bytes(symbol).length, 0, "Vault symbol should not be empty");
+        assertEq(symbol, "sLP-ynRWAx-USDC", "Vault symbol should match the expected symbol exactly");
 
         uint256 totalAssets = stakedLPStrategy.totalAssets();
         assertEq(totalAssets, 0, "Initial totalAssets should be 0");
 
         address alice = makeAddr("alice");
         uint256 maxDeposit = stakedLPStrategy.maxDeposit(alice);
-        assertGt(maxDeposit, 0, "maxDeposit should be >0");
+        assertEq(maxDeposit, type(uint256).max, "maxDeposit should be max");
 
         uint256 maxMint = stakedLPStrategy.maxMint(alice);
-        assertGt(maxMint, 0, "maxMint should be >0");
+        assertEq(maxMint, type(uint256).max, "maxMint should be >0");
 
         uint256 maxWithdraw = stakedLPStrategy.maxWithdraw(alice);
         uint256 maxRedeem = stakedLPStrategy.maxRedeem(alice);
 
         assertEq(maxWithdraw, 0, "maxWithdraw for Alice should be 0 before deposit");
         assertEq(maxRedeem, 0, "maxRedeem for Alice should be 0 before deposit");
+
+        // Get the assets array and assert its contents and length
+        address[] memory assets = stakedLPStrategy.getAssets();
+        assertEq(assets.length, 2, "Strategy should have 2 assets registered");
+        assertEq(assets[0], MC.CURVE_ynRWAx_USDC_LP, "First asset should be CURVE_ynRWAx_USDC_LP");
+        assertEq(assets[1], MC.STAKEDAO_CURVE_ynRWAx_USDC_LP, "Second asset should be StakeDaoGauge");
     }
 
     function test_previewDeposit() public {
@@ -55,8 +61,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         assertGt(previewShares, 0, "previewDeposit should return >0 shares for deposit");
     }
 
-    function test_previewMint() public {
-        address alice = makeAddr("alice");
+    function test_previewMint() public view {
         uint256 mintAmount = 100e18; // 100 shares
 
         // Preview mint: how much USDC needed to get certain shares?
