@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
 import {IVault} from "lib/yieldnest-vault/src/interface/IVault.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {BaseVault} from "lib/yieldnest-vault/src/BaseVault.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "lib/yieldnest-vault/src/Common.sol";
@@ -12,11 +11,12 @@ contract StakedLPStrategyHooks is IHooks {
     error NotSupported();
 
     IVault public immutable vault;
-    IStakeDaoLiquidityGauge public immutable stakeDaoLiquidityGauge;
+    /// @notice The vault that the strategy is staking to
+    IERC4626 public immutable targetVault;
 
-    constructor(address _vault, address _stakeDaoLiquidityGauge) {
+    constructor(address _vault, address targetVault_) {
         vault = IVault(_vault);
-        stakeDaoLiquidityGauge = IStakeDaoLiquidityGauge(_stakeDaoLiquidityGauge);
+        targetVault = IERC4626(targetVault_);
     }
 
     modifier onlyVault() {
@@ -74,15 +74,15 @@ contract StakedLPStrategyHooks is IHooks {
             uint256[] memory values = new uint256[](2);
             bytes[] memory data = new bytes[](2);
 
-            // 1. approve asset to StakeDAO gauge
+            // 1. approve asset to the target vault
             targets[0] = asset;
             values[0] = 0;
-            data[0] = abi.encodeWithSignature("approve(address,uint256)", address(stakeDaoLiquidityGauge), assets);
+            data[0] = abi.encodeWithSignature("approve(address,uint256)", address(targetVault), assets);
 
-            // 2. call deposit/Stake on stake dao (assuming deposit(uint256) interface)
-            targets[1] = address(stakeDaoLiquidityGauge);
+            // 2. call deposit/Stake on the target vault (assuming deposit(uint256,address) interface)
+            targets[1] = address(targetVault);
             values[1] = 0;
-            data[1] = abi.encodeWithSignature("deposit(uint256)", assets);
+            data[1] = abi.encodeWithSignature("deposit(uint256,address)", assets, address(vault));
 
             BaseVault(payable(address(vault))).processor(targets, values, data);
         }
@@ -94,10 +94,11 @@ contract StakedLPStrategyHooks is IHooks {
             uint256[] memory values = new uint256[](1);
             bytes[] memory data = new bytes[](1);
 
-            // 1. Call withdraw on the StakeDAO gauge (assuming withdraw(uint256) interface)
-            targets[0] = address(stakeDaoLiquidityGauge);
+            // 1. Call withdraw on the target vault (assuming withdraw(uint256,address,address) interface)
+            targets[0] = address(targetVault);
             values[0] = 0;
-            data[0] = abi.encodeWithSignature("withdraw(uint256)", assets);
+            data[0] =
+                abi.encodeWithSignature("withdraw(uint256,address,address)", assets, address(vault), address(vault));
 
             BaseVault(payable(address(vault))).processor(targets, values, data);
         }

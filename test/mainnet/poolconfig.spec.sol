@@ -6,7 +6,6 @@ import {BaseIntegrationTest} from "test/mainnet/BaseIntegrationTest.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {ICurveStableSwapFactoryNG} from "src/interfaces/ICurveStableSwapFactoryNG.sol";
 import {console} from "forge-std/console.sol";
 import {MockERC4626, ERC20} from "lib/yieldnest-vault/test/mainnet/mocks/MockERC4626.sol";
@@ -93,11 +92,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256,
         /*withdrawAmount*/
         uint8 coinIndex
-    )
-        public
-        view
-        returns (PoolStats memory)
-    {
+    ) public view returns (PoolStats memory) {
         PoolStats memory stats;
 
         // Just read pool/account stats (no state changes)
@@ -261,15 +256,15 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
                 "Virtual price should increase after re-adding assetB"
             );
 
-            uint256 increasePercentageAfterRemoval =
-                (stats.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter) * 10000
-                    / statsBeforeRemovingLiquidity.valuePerShareAfter;
+            uint256 increasePercentageAfterRemoval = (
+                stats.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter
+            ) * 10000 / statsBeforeRemovingLiquidity.valuePerShareAfter;
 
             console.log("increasePercentageAfterRemoval:", _toPercentString(increasePercentageAfterRemoval));
 
-            uint256 increasePercentageAfterReAdd =
-                (statsAfterReAdd.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter) * 10000
-                    / statsBeforeRemovingLiquidity.valuePerShareAfter;
+            uint256 increasePercentageAfterReAdd = (
+                statsAfterReAdd.valuePerShareAfter - statsBeforeRemovingLiquidity.valuePerShareAfter
+            ) * 10000 / statsBeforeRemovingLiquidity.valuePerShareAfter;
 
             console.log("increasePercentageAfterReAdd:", _toPercentString(increasePercentageAfterReAdd));
             printPoolCoinBalances(poolAddress);
@@ -300,20 +295,19 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         oracles[0] = address(0x0000000000000000000000000000000000000000);
         oracles[1] = address(0x0000000000000000000000000000000000000000);
 
-        address poolAddress = ICurveStableSwapFactoryNG(MC.CURVE_STABLE_SWAP_FACTORY_NG)
-            .deploy_plain_pool(
-                "AA/AB-test-pool",
-                "TynAB",
-                coins,
-                A,
-                fee,
-                offpegFeeMultiplier,
-                ma_exp_time,
-                0,
-                assetTypes,
-                methodIds,
-                oracles
-            );
+        address poolAddress = ICurveStableSwapFactoryNG(MC.CURVE_STABLE_SWAP_FACTORY_NG).deploy_plain_pool(
+            "AA/AB-test-pool",
+            "TynAB",
+            coins,
+            A,
+            fee,
+            offpegFeeMultiplier,
+            ma_exp_time,
+            0,
+            assetTypes,
+            methodIds,
+            oracles
+        );
         return poolAddress;
     }
 
@@ -383,7 +377,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertNotEq(poolAddress, address(0));
 
         {
-
             uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
 
             _depositToPool(poolAddress, alice, 1e18, 1e18);
@@ -535,7 +528,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         deposit_to_assets_and_boost_rate(poolAddress);
 
         {
-
             uint256 amount = 1_000_000 * 1e18; // using 18 decimals for the test
 
             _depositToPool(poolAddress, alice, 1e18, 1e18);
@@ -567,7 +559,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
             uint256 assetBSharesReceived;
             {
-
                 vm.startPrank(alice);
                 uint256 redeemedAssetAAmount = ICurvePool(poolAddress).remove_liquidity_one_coin(1e17, 0, 0);
                 vm.stopPrank();

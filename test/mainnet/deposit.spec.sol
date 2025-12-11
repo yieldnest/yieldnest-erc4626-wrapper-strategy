@@ -6,7 +6,7 @@ import {BaseIntegrationTest} from "test/mainnet/BaseIntegrationTest.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
+import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {console} from "forge-std/console.sol";
 
 contract VaultBasicFunctionalityTest is BaseIntegrationTest {
@@ -22,23 +22,20 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         deposit_lp(alice, depositAmount);
 
-        address gauge = MC.STAKEDAO_CURVE_ynRWAx_USDC_LP;
+        address vault = MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT;
 
         // Find how much LP tokens alice received (query balance)
         uint256 lpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
 
-        // Approve Gauge to spend LP tokens
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(gauge, lpBalance);
+        // The gauge is a vault, so use the vault address for approval and deposit
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT, lpBalance);
 
-        console.log("LP balance:", lpBalance);
-        // Log alice's gauge balance before deposit
-        console.log("Gauge balance before:", IERC20(gauge).balanceOf(alice));
+        // Deposit all LP tokens into the Vault as alice
+        IERC4626(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).deposit(lpBalance, alice);
 
-        // Deposit all LP tokens into the Gauge as alice
-        IStakeDaoLiquidityGauge(gauge).deposit(lpBalance);
-
-        // Log alice's gauge balance after deposit
-        console.log("Gauge balance after:", IERC20(gauge).balanceOf(alice));
+        assertEq(
+            IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(alice), lpBalance, "Vault share balance mismatch"
+        );
 
         vm.stopPrank();
     }
@@ -105,7 +102,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(stakedLPStrategy.totalSupply(), lpBalance, "Alice's stakedao gauge total supply mismatch");
 
         assertEq(
-            IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_LP).balanceOf(address(stakedLPStrategy)),
+            IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy)),
             lpBalance,
             "Vault balance of stakedao LP mismatch"
         );

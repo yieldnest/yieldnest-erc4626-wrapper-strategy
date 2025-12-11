@@ -6,7 +6,6 @@ import {BaseIntegrationTest} from "test/mainnet/BaseIntegrationTest.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {console} from "forge-std/console.sol";
 
 contract VaultViewsTest is BaseIntegrationTest {
@@ -48,7 +47,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         address[] memory assets = stakedLPStrategy.getAssets();
         assertEq(assets.length, 2, "Strategy should have 2 assets registered");
         assertEq(assets[0], MC.CURVE_ynRWAx_USDC_LP, "First asset should be CURVE_ynRWAx_USDC_LP");
-        assertEq(assets[1], MC.STAKEDAO_CURVE_ynRWAx_USDC_LP, "Second asset should be StakeDaoGauge");
+        assertEq(assets[1], MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT, "Second asset should be StakeDaoGauge");
     }
 
     function test_previewDeposit() public {

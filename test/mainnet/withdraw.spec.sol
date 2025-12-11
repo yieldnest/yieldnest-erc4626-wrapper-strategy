@@ -6,7 +6,6 @@ import {BaseIntegrationTest} from "test/mainnet/BaseIntegrationTest.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
 import {console} from "forge-std/console.sol";
 
 contract VaultBasicFunctionalityTest is BaseIntegrationTest {
@@ -44,7 +43,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 withdrawShares = shares;
 
         uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
-        uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_LP).balanceOf(address(stakedLPStrategy));
+        uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
 
         uint256 assetsWithdrawn = stakedLPStrategy.withdraw(withdrawShares, alice, alice);
 
@@ -61,7 +60,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(aliceBalanceAfter, shares - withdrawShares, "Share balance did not decrease by withdrawn shares");
 
         // Assert the StakeDao gauge LP balance in the vault decreased by assetsWithdrawn
-        uint256 postStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_LP).balanceOf(address(stakedLPStrategy));
+        uint256 postStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
         assertEq(
             postStakeDaoBalance,
             preStakeDaoBalance - assetsWithdrawn,

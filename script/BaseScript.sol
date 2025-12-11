@@ -23,14 +23,14 @@ abstract contract BaseScript is Script {
         string name;
         string symbol_;
         uint8 decimals;
-        address stakeDaoLpToken;
+        address targetVault;
     }
 
     function setDeploymentParameters(DeploymentParameters memory params) public virtual {
         name = params.name;
         symbol_ = params.symbol_;
         decimals = params.decimals;
-        stakeDaoLpToken = params.stakeDaoLpToken;
+        targetVault = params.targetVault;
     }
 
     Env public deploymentEnv = Env.PROD;
@@ -38,7 +38,7 @@ abstract contract BaseScript is Script {
     string public name;
     string public symbol_;
     uint8 public decimals;
-    address public stakeDaoLpToken;
+    address public targetVault;
     address public baseAsset;
 
     uint256 public minDelay;
@@ -108,7 +108,7 @@ abstract contract BaseScript is Script {
         deployer = address(vm.parseJsonAddress(jsonInput, ".deployer"));
         timelock = TimelockController(payable(address(vm.parseJsonAddress(jsonInput, ".timelock"))));
         rateProvider = IProvider(payable(address(vm.parseJsonAddress(jsonInput, ".rateProvider"))));
-        stakeDaoLpToken = vm.parseJsonAddress(jsonInput, ".stakeDaoLpToken");
+        targetVault = vm.parseJsonAddress(jsonInput, ".targetVault");
 
         strategy =
             StakedLPStrategy(payable(address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-proxy")))));
@@ -117,10 +117,9 @@ abstract contract BaseScript is Script {
 
     function _deploymentFilePath(Env env) internal view virtual returns (string memory) {
         if (env == Env.PROD) {
-            return
-                string.concat(
-                    vm.projectRoot(), "/deployments/", symbol(), "-", Strings.toString(block.chainid), ".json"
-                );
+            return string.concat(
+                vm.projectRoot(), "/deployments/", symbol(), "-", Strings.toString(block.chainid), ".json"
+            );
         }
 
         return string.concat(
@@ -134,7 +133,7 @@ abstract contract BaseScript is Script {
         vm.serializeAddress(symbol(), "admin", actors.ADMIN());
         vm.serializeAddress(symbol(), "timelock", address(timelock));
         vm.serializeAddress(symbol(), "rateProvider", address(rateProvider));
-        vm.serializeAddress(symbol(), "stakeDaoLpToken", stakeDaoLpToken);
+        vm.serializeAddress(symbol(), "targetVault", targetVault);
         vm.serializeAddress(symbol(), string.concat(symbol(), "-proxy"), address(strategy));
         vm.serializeAddress(symbol(), string.concat(symbol(), "-proxyAdmin"), strategyProxyAdmin);
 

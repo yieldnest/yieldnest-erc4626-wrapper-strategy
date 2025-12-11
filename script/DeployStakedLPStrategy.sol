@@ -10,7 +10,7 @@ import {BaseScript} from "script/BaseScript.sol";
 import {ProxyUtils} from "lib/yieldnest-vault/script/ProxyUtils.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IProvider} from "lib/yieldnest-vault/src/interface/IProvider.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
+import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {Script} from "forge-std/Script.sol";
 
 // forge script DeployFlexStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
@@ -39,7 +39,7 @@ contract DeployStakedLPStrategy is BaseScript {
                 symbol: symbol_,
                 decimals: decimals,
                 actors: actors,
-                stakeDaoLpToken: stakeDaoLpToken,
+                targetVault: targetVault,
                 implementations: implementations
             })
         );
@@ -82,7 +82,7 @@ contract DeployStakedLPStrategy is BaseScript {
         if (decimals == 0) {
             revert("Not pre-configured");
         }
-        baseAsset = IStakeDaoLiquidityGauge(stakeDaoLpToken).lp_token();
+        baseAsset = IERC4626(targetVault).asset();
     }
 
     function _verifyDeploymentParams() internal view virtual {
@@ -98,8 +98,8 @@ contract DeployStakedLPStrategy is BaseScript {
             revert InvalidDeploymentParams("strategy decimals not set");
         }
 
-        if (stakeDaoLpToken == address(0)) {
-            revert InvalidDeploymentParams("stakeDaoLpToken is not set");
+        if (targetVault == address(0)) {
+            revert InvalidDeploymentParams("targetVault is not set");
         }
     }
 }

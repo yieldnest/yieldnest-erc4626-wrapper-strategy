@@ -29,7 +29,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
                 name: "Staked LP Strategy ynRWAx-USDC",
                 symbol_: "sLP-ynRWAx-USDC",
                 decimals: 18,
-                stakeDaoLpToken: MC.STAKEDAO_CURVE_ynRWAx_USDC_LP
+                targetVault: MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT
             })
         );
         deployment.setEnv(BaseScript.Env.TEST);

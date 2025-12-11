@@ -10,10 +10,9 @@ import {BaseRoles} from "script/roles/BaseRoles.sol";
 import {SafeRules, IVault} from "@yieldnest-vault-script/rules/SafeRules.sol";
 import {Provider} from "src/module/Provider.sol";
 import {StakedLPStrategyHooks} from "src/hooks/StakedLpStrategyHooks.sol";
-import {StakeDaoRules} from "script/rules/StakeDaoRules.sol";
 import {SafeRules} from "lib/yieldnest-vault/script/rules/SafeRules.sol";
 import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
-import {IStakeDaoLiquidityGauge} from "src/interfaces/IStakeDaoLiquidityGauge.sol";
+import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 
 contract StakedLPStrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -24,7 +23,7 @@ contract StakedLPStrategyDeployer {
         string symbol;
         uint8 decimals;
         IActors actors;
-        address stakeDaoLpToken;
+        address targetVault;
         Implementations implementations;
     }
 
@@ -43,7 +42,7 @@ contract StakedLPStrategyDeployer {
     TimelockController public timelock;
     IActors public actors;
     Implementations public implementations;
-    address public stakeDaoLpToken;
+    address public targetVault;
     address public curvePool;
 
     bool public deploymentDone;
@@ -57,7 +56,7 @@ contract StakedLPStrategyDeployer {
         name = params.name;
         symbol_ = params.symbol;
         decimals = params.decimals;
-        stakeDaoLpToken = params.stakeDaoLpToken;
+        targetVault = params.targetVault;
         implementations = params.implementations;
     }
 
@@ -76,7 +75,8 @@ contract StakedLPStrategyDeployer {
         // Adapt initialization to match StakedLPStrategy.InitParams
         // See StakedLPStrategy.sol for the correct order/fields.
         strategy = StakedLPStrategy(
-            payable(address(
+            payable(
+                address(
                     new TransparentUpgradeableProxy(
                         address(implementations.stakedLpStrategyImplementation),
                         address(timelock),
@@ -90,12 +90,13 @@ contract StakedLPStrategyDeployer {
                                 decimals_: decimals,
                                 alwaysComputeTotalAssets_: true, // for fee collection
                                 defaultAssetIndex_: 0,
-                                stakeDaoLPToken_: stakeDaoLpToken,
+                                vault_: targetVault,
                                 provider_: address(rateProvider)
                             })
                         )
                     )
-                ))
+                )
+            )
         );
 
         configureStrategy();
@@ -105,17 +106,17 @@ contract StakedLPStrategyDeployer {
         BaseRoles.configureDefaultRolesStrategy(strategy, address(timelock), actors);
         BaseRoles.configureTemporaryRolesStrategy(strategy, deployer);
 
-        StakedLPStrategyHooks hooks = new StakedLPStrategyHooks(address(strategy), stakeDaoLpToken);
+        StakedLPStrategyHooks hooks = new StakedLPStrategyHooks(address(strategy), targetVault);
         strategy.setHooks(address(hooks));
 
         strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
 
         {
-            address curvePoolLpToken = IStakeDaoLiquidityGauge(stakeDaoLpToken).lp_token();
+            address underlyingAsset = IERC4626(targetVault).asset();
             SafeRules.RuleParams[] memory rules = new SafeRules.RuleParams[](3);
-            rules[0] = StakeDaoRules.getDepositRule(stakeDaoLpToken);
-            rules[1] = StakeDaoRules.getWithdrawRule(stakeDaoLpToken);
-            rules[2] = BaseRules.getApprovalRule(curvePoolLpToken, stakeDaoLpToken);
+            rules[0] = BaseRules.getDepositRule(targetVault, address(strategy));
+            rules[1] = BaseRules.getWithdrawRule(targetVault, address(strategy));
+            rules[2] = BaseRules.getApprovalRule(underlyingAsset, targetVault);
 
             // Set processor rules using SafeRules
             SafeRules.setProcessorRules(IVault(address(strategy)), rules, true);
@@ -127,6 +128,6 @@ contract StakedLPStrategyDeployer {
     }
 
     function deployRateProvider() internal {
-        rateProvider = IProvider(address(new Provider(stakeDaoLpToken)));
+        rateProvider = IProvider(address(new Provider(targetVault)));
     }
 }
