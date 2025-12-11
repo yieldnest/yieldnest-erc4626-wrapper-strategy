@@ -110,7 +110,8 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
     function _availableAssets(address asset_) internal view virtual override returns (uint256 availableAssets) {
         address[] memory assets = getAssets();
         if (asset_ == assets[0]) {
-            availableAssets = IERC20(asset_).balanceOf(address(this)) + IERC20(assets[1]).balanceOf(address(this));
+            IERC4626 vault = IERC4626(assets[1]);
+            availableAssets = IERC20(asset_).balanceOf(address(this)) + vault.convertToAssets(vault.balanceOf(address(this)));
         } else {
             availableAssets = super._availableAssets(asset_);
         }
