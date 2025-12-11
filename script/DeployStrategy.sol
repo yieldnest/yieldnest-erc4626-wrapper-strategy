@@ -4,8 +4,8 @@ pragma solidity ^0.8.24;
 import {BaseRoles} from "script/roles/BaseRoles.sol";
 import {console} from "forge-std/console.sol";
 import {SafeRules, IVault} from "@yieldnest-vault-script/rules/SafeRules.sol";
-import {StakedLPStrategyDeployer} from "script/StakedLPStrategyDeployer.sol";
-import {StakedLPStrategy} from "src/StakedLPStrategy.sol";
+import {StrategyDeployer} from "script/StrategyDeployer.sol";
+import {ERC4626WrapperStrategy} from "src/ERC4626WrapperStrategy.sol";
 import {BaseScript} from "script/BaseScript.sol";
 import {ProxyUtils} from "lib/yieldnest-vault/script/ProxyUtils.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
@@ -13,9 +13,9 @@ import {IProvider} from "lib/yieldnest-vault/src/interface/IProvider.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {Script} from "forge-std/Script.sol";
 
-// forge script DeployFlexStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
+// forge script DeployStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
 // <CAST_WALLET_ACCOUNT>  --sender <SENDER_ADDRESS>  --verify --etherscan-api-key <ETHERSCAN_API_KEY>  -vvv
-contract DeployStakedLPStrategy is BaseScript {
+contract DeployStrategy is BaseScript {
     error InvalidRules();
     error InvalidRateProvider();
     error InvalidDeploymentParams(string);
@@ -28,13 +28,13 @@ contract DeployStakedLPStrategy is BaseScript {
         super._verifySetup();
     }
 
-    function createDeployer(StakedLPStrategyDeployer.Implementations memory implementations)
+    function createDeployer(StrategyDeployer.Implementations memory implementations)
         internal
         virtual
-        returns (StakedLPStrategyDeployer)
+        returns (StrategyDeployer)
     {
-        return new StakedLPStrategyDeployer(
-            StakedLPStrategyDeployer.DeploymentParams({
+        return new StrategyDeployer(
+            StrategyDeployer.DeploymentParams({
                 name: name,
                 symbol: symbol_,
                 decimals: decimals,
@@ -54,11 +54,11 @@ contract DeployStakedLPStrategy is BaseScript {
 
         _deployTimelockController();
 
-        StakedLPStrategyDeployer.Implementations memory implementations;
-        implementations.stakedLpStrategyImplementation = new StakedLPStrategy();
+        StrategyDeployer.Implementations memory implementations;
+        implementations.stakedLpStrategyImplementation = new ERC4626WrapperStrategy();
         implementations.timelockController = timelock;
 
-        StakedLPStrategyDeployer strategyDeployer = createDeployer(implementations);
+        StrategyDeployer strategyDeployer = createDeployer(implementations);
         // The Deployer is the Strategy Deployer contract
         deployer = address(strategyDeployer);
 
@@ -72,7 +72,7 @@ contract DeployStakedLPStrategy is BaseScript {
         vm.stopBroadcast();
     }
 
-    function readDeployedContracts(StakedLPStrategyDeployer strategyDeployer) internal virtual {
+    function readDeployedContracts(StrategyDeployer strategyDeployer) internal virtual {
         strategy = strategyDeployer.strategy();
         rateProvider = strategyDeployer.rateProvider();
         timelock = strategyDeployer.timelock();

@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {IActors} from "lib/yieldnest-vault/script/Actors.sol";
 import {IProvider} from "lib/yieldnest-vault/src/interface/IProvider.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
-import {StakedLPStrategy} from "src/StakedLPStrategy.sol";
+import {ERC4626WrapperStrategy} from "src/ERC4626WrapperStrategy.sol";
 import {TransparentUpgradeableProxy} from "lib/yieldnest-vault/src/Common.sol";
 import {BaseRoles} from "script/roles/BaseRoles.sol";
 import {SafeRules, IVault} from "@yieldnest-vault-script/rules/SafeRules.sol";
@@ -14,7 +14,7 @@ import {SafeRules} from "lib/yieldnest-vault/script/rules/SafeRules.sol";
 import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 
-contract StakedLPStrategyDeployer {
+contract StrategyDeployer {
     error InvalidDeploymentParams(string);
     error DeploymentDone();
 
@@ -28,11 +28,11 @@ contract StakedLPStrategyDeployer {
     }
 
     struct Implementations {
-        StakedLPStrategy stakedLpStrategyImplementation;
+        ERC4626WrapperStrategy stakedLpStrategyImplementation;
         TimelockController timelockController;
     }
 
-    StakedLPStrategy public strategy;
+    ERC4626WrapperStrategy public strategy;
 
     address public deployer;
     string public name;
@@ -74,16 +74,16 @@ contract StakedLPStrategyDeployer {
 
         // Adapt initialization to match StakedLPStrategy.InitParams
         // See StakedLPStrategy.sol for the correct order/fields.
-        strategy = StakedLPStrategy(
+        strategy = ERC4626WrapperStrategy(
             payable(
                 address(
                     new TransparentUpgradeableProxy(
                         address(implementations.stakedLpStrategyImplementation),
                         address(timelock),
                         abi.encodeWithSelector(
-                            StakedLPStrategy.initialize.selector,
+                            ERC4626WrapperStrategy.initialize.selector,
                             // Pass as a single InitParams struct as required in StakedLPStrategy
-                            StakedLPStrategy.InitParams({
+                            ERC4626WrapperStrategy.InitParams({
                                 admin: admin,
                                 name: name,
                                 symbol: symbol_,

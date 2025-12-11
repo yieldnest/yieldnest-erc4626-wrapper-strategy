@@ -3,11 +3,11 @@ pragma solidity ^0.8.24;
 
 import {AssertUtils} from "lib/yieldnest-vault/test/utils/AssertUtils.sol";
 import {Test} from "lib/forge-std/src/Test.sol";
-import {StakedLPStrategy} from "src/StakedLPStrategy.sol";
+import {ERC4626WrapperStrategy} from "src/ERC4626WrapperStrategy.sol";
 import {TransparentUpgradeableProxy} from "lib/yieldnest-vault/src/Common.sol";
 import {MainnetContracts as MC} from "script/Contracts.sol";
 import {Provider} from "src/module/Provider.sol";
-import {DeployStakedLPStrategy} from "script/DeployStakedLPStrategy.sol";
+import {DeployStrategy} from "script/DeployStrategy.sol";
 import {BaseScript} from "script/BaseScript.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
@@ -15,14 +15,14 @@ import {ICurvePool} from "src/interfaces/ICurvePool.sol";
 import {StrategyAdapter} from "test/helpers/StrategyAdapter.sol";
 
 contract BaseIntegrationTest is Test, AssertUtils {
-    StakedLPStrategy public stakedLPStrategy;
-    DeployStakedLPStrategy public deployment;
+    ERC4626WrapperStrategy public stakedLPStrategy;
+    DeployStrategy public deployment;
     StrategyAdapter public strategyAdapter;
 
     address public ADMIN = makeAddr("admin");
 
     function setUp() public virtual {
-        deployment = new DeployStakedLPStrategy();
+        deployment = new DeployStrategy();
 
         deployment.setDeploymentParameters(
             BaseScript.DeploymentParameters({
@@ -35,7 +35,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
         deployment.setEnv(BaseScript.Env.TEST);
         deployment.run();
 
-        stakedLPStrategy = StakedLPStrategy(deployment.strategy());
+        stakedLPStrategy = ERC4626WrapperStrategy(deployment.strategy());
 
         // Deploy the StrategyAdapter as a proxy, then call initialize after
         strategyAdapter =

@@ -8,7 +8,7 @@ import {FeeMath} from "lib/yieldnest-vault/src/module/FeeMath.sol";
 import {LinearWithdrawalFee} from "lib/yieldnest-vault/src/module/LinearWithdrawalFee.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 
-contract StakedLPStrategy is BaseStrategy, LinearWithdrawalFee {
+contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
     string public constant STAKED_LP_STRATEGY_VERSION = "0.1.0";
 
     bytes32 public constant FEE_MANAGER_ROLE = keccak256("FEE_MANAGER_ROLE");

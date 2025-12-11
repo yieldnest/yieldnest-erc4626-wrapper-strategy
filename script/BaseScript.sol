@@ -7,8 +7,8 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {MainnetActors, IActors} from "@yieldnest-vault-script/Actors.sol";
 import {IContracts, L1Contracts} from "@yieldnest-vault-script/Contracts.sol";
-import {StakedLPStrategy} from "src/StakedLPStrategy.sol";
-import {StakedLPStrategyDeployer} from "script/StakedLPStrategyDeployer.sol";
+import {ERC4626WrapperStrategy} from "src/ERC4626WrapperStrategy.sol";
+import {StrategyDeployer} from "script/StrategyDeployer.sol";
 import {console} from "forge-std/console.sol";
 
 abstract contract BaseScript is Script {
@@ -49,7 +49,7 @@ abstract contract BaseScript is Script {
     TimelockController public timelock;
     IProvider public rateProvider;
 
-    StakedLPStrategy public strategy;
+    ERC4626WrapperStrategy public strategy;
     address public strategyProxyAdmin;
 
     error UnsupportedChain();
@@ -110,8 +110,9 @@ abstract contract BaseScript is Script {
         rateProvider = IProvider(payable(address(vm.parseJsonAddress(jsonInput, ".rateProvider"))));
         targetVault = vm.parseJsonAddress(jsonInput, ".targetVault");
 
-        strategy =
-            StakedLPStrategy(payable(address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-proxy")))));
+        strategy = ERC4626WrapperStrategy(
+            payable(address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-proxy"))))
+        );
         strategyProxyAdmin = address(vm.parseJsonAddress(jsonInput, string.concat(".", symbol(), "-proxyAdmin")));
     }
 
