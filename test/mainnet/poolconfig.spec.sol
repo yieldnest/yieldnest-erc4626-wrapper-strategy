@@ -88,7 +88,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
     function getPoolStats(
         address poolAddress,
-        address alice,
+        address depositor,
         uint256,
         /*withdrawAmount*/
         uint8 coinIndex
@@ -96,11 +96,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         PoolStats memory stats;
 
         // Just read pool/account stats (no state changes)
-        uint256 balance = IERC20(ICurvePool(poolAddress).coins(coinIndex)).balanceOf(alice);
+        uint256 balance = IERC20(ICurvePool(poolAddress).coins(coinIndex)).balanceOf(depositor);
 
         stats.redeemableAmount = 0; // Cannot preview redeemable amount without a view function; set to 0 as a placeholder
         stats.assetBDelta = 0; // Cannot simulate delta in pure view; set to 0 as a placeholder
-        stats.lpBalanceAfterRedeem = IERC20(poolAddress).balanceOf(alice);
+        stats.lpBalanceAfterRedeem = IERC20(poolAddress).balanceOf(depositor);
         stats.virtualPriceAfter = ICurvePool(poolAddress).get_virtual_price();
         stats.totalAssetValueAfter = poolTotalAssetValue(poolAddress);
         stats.valuePerShareAfter = valuePerShare(poolAddress);
@@ -214,9 +214,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         console.log("lpBalance:", lpBalance);
 
-        // Log pool price before and after withdrawing liquidity
-        uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
-
         PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
         printPoolStats(statsBeforeRemovingLiquidity);
 
@@ -311,43 +308,43 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         return poolAddress;
     }
 
-    function _depositToPool(address poolAddress, address alice, uint256 amount1, uint256 amount2) internal {
+    function _depositToPool(address poolAddress, address depositor, uint256 amount1, uint256 amount2) internal {
         // USDC and coin order: [ynRWAx, GHO]
-        address assetA = ICurvePool(poolAddress).coins(0);
-        address assetB = ICurvePool(poolAddress).coins(1);
+        address firstAsset = ICurvePool(poolAddress).coins(0);
+        address secondAsset = ICurvePool(poolAddress).coins(1);
 
-        uint256 assetAShares;
-        uint256 assetBShares;
+        uint256 firstAssetShares;
+        uint256 secondAssetShares;
 
         {
-            deal(baseAsset, alice, amount1);
+            deal(baseAsset, depositor, amount1);
 
-            vm.startPrank(alice);
-            // Deposit amount1 to assetA using ERC4626, store returned shares
-            IERC20(baseAsset).approve(address(assetA), amount1);
-            assetAShares = IERC4626(assetA).deposit(amount1, alice);
+            vm.startPrank(depositor);
+            // Deposit amount1 to firstAsset using ERC4626, store returned shares
+            IERC20(baseAsset).approve(address(firstAsset), amount1);
+            firstAssetShares = IERC4626(firstAsset).deposit(amount1, depositor);
             vm.stopPrank();
         }
 
         {
-            // Mint or allocate USDC to alice, then allocate USDC to ynRWAx via test logic (assume a swap/mint simulation)
-            deal(baseAsset, alice, amount2);
+            // Mint or allocate USDC to depositor, then allocate USDC to ynRWAx via test logic (assume a swap/mint simulation)
+            deal(baseAsset, depositor, amount2);
 
-            vm.startPrank(alice);
-            // Deposit amount2 to assetB using ERC4626, store returned shares
-            IERC20(baseAsset).approve(address(assetB), amount2);
-            assetBShares = IERC4626(assetB).deposit(amount2, alice);
+            vm.startPrank(depositor);
+            // Deposit amount2 to secondAsset using ERC4626, store returned shares
+            IERC20(baseAsset).approve(address(secondAsset), amount2);
+            secondAssetShares = IERC4626(secondAsset).deposit(amount2, depositor);
             vm.stopPrank();
         }
 
-        // alice approves the pool to spend her tokens
-        vm.startPrank(alice);
-        IERC20(assetA).approve(poolAddress, assetAShares);
-        IERC20(assetB).approve(poolAddress, assetBShares);
+        // depositor approves the pool to spend her tokens
+        vm.startPrank(depositor);
+        IERC20(firstAsset).approve(poolAddress, firstAssetShares);
+        IERC20(secondAsset).approve(poolAddress, secondAssetShares);
 
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = assetAShares;
-        amounts[1] = assetBShares;
+        amounts[0] = firstAssetShares;
+        amounts[1] = secondAssetShares;
 
         // Deposit them both at the same time to the pool
         ICurvePool(poolAddress).add_liquidity(amounts, 0);
