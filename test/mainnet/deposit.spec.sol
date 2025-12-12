@@ -151,4 +151,47 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         vm.stopPrank();
     }
+
+    function test_fuzz_initial_mint(uint256 mintAmount) public {
+        // Bound mintAmount between 1 and 100,000 USDC (6 decimals)
+        mintAmount = bound(mintAmount, 1000, 100_000 * 1e6);
+
+        address alice = makeAddr("alice");
+
+        deal(MC.USDC, alice, mintAmount);
+
+        // Deposit LP tokens to Alice (simulates initial deposit to get LP tokens)
+        uint256 lpBalance = deposit_lp(alice, mintAmount);
+
+        // Record pre-mint stats
+        uint256 beforeTotalAssets = stakedLPStrategy.totalAssets();
+        uint256 beforeTotalSupply = stakedLPStrategy.totalSupply();
+
+        vm.startPrank(alice);
+
+        // Approve strategy to use Alice's LP
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+
+        // Preview shares to be minted for this LP balance
+        uint256 previewShares = stakedLPStrategy.previewDeposit(lpBalance);
+        vm.assume(previewShares > 0);
+
+        // Perform mint with previewed shares
+        uint256 assetsRequired = stakedLPStrategy.mint(previewShares, alice);
+
+        // User gets intended shares, vault assets increased, only the required lp tokens moved
+        assertEq(IERC20(address(stakedLPStrategy)).balanceOf(alice), previewShares, "Share balance mismatch on mint");
+        assertEq(assetsRequired, lpBalance, "Mint did not use all deposited LP assets");
+
+        uint256 afterTotalAssets = stakedLPStrategy.totalAssets();
+        uint256 afterTotalSupply = stakedLPStrategy.totalSupply();
+
+        assertEq(
+            afterTotalAssets, beforeTotalAssets + lpBalance, "totalAssets not increased correctly after mint (fuzz)"
+        );
+        assertEq(
+            afterTotalSupply, beforeTotalSupply + previewShares, "totalSupply not increased correctly after mint (fuzz)"
+        );
+        vm.stopPrank();
+    }
 }
