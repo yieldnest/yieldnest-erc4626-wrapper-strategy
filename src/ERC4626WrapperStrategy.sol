@@ -9,7 +9,7 @@ import {LinearWithdrawalFee} from "lib/yieldnest-vault/src/module/LinearWithdraw
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 
 contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
-    string public constant STAKED_LP_STRATEGY_VERSION = "0.1.0";
+    string public constant ERC4626_WRAPPER_STRATEGY_VERSION = "0.1.0";
 
     bytes32 public constant FEE_MANAGER_ROLE = keccak256("FEE_MANAGER_ROLE");
 
