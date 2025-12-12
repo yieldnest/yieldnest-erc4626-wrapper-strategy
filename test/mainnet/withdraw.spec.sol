@@ -304,4 +304,95 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(stakedLPStrategy.totalSupply(), 0, "All shares burned after Alice's redeem");
         vm.stopPrank();
     }
+
+    function test_deposit_donation_and_another_deposit() public {
+        address alice = makeAddr("alice");
+        address bob = makeAddr("bob");
+        address charlie = makeAddr("charlie");
+
+        uint256 depositAmount = 100_000e6;
+        uint256 donationAmount = 50_000e6;
+
+        // 1. Alice: deposit
+        deal(MC.USDC, alice, depositAmount);
+        uint256 aliceLp = deposit_lp(alice, depositAmount);
+
+        vm.startPrank(alice);
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), aliceLp);
+        uint256 aliceShares = stakedLPStrategy.deposit(aliceLp, alice);
+        vm.stopPrank();
+
+        // 2. Bob: DONATES directly to LP vault (does not call deposit, just increases vault assets)
+        deal(MC.USDC, bob, donationAmount);
+        uint256 bobLp = deposit_lp(bob, donationAmount);
+        vm.startPrank(bob);
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).transfer(address(stakedLPStrategy), bobLp);
+        vm.stopPrank();
+
+        // Record state after donation
+        assertEq(stakedLPStrategy.totalAssets(), aliceLp + bobLp, "Total assets should reflect Alice's and Bob's");
+        assertEq(stakedLPStrategy.totalSupply(), aliceShares, "Supply only reflects Alice's shares");
+
+        // 3. Charlie: fresh deposit after donation
+        deal(MC.USDC, charlie, depositAmount);
+        uint256 charlieLp = deposit_lp(charlie, depositAmount);
+
+        vm.startPrank(charlie);
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), charlieLp);
+
+        // Record previewShares for Charlie
+        uint256 charliePreviewShares = stakedLPStrategy.previewDeposit(charlieLp);
+        // Next deposit after donation should get fewer shares per asset than Alice
+        uint256 charlieShares = stakedLPStrategy.deposit(charlieLp, charlie);
+        vm.stopPrank();
+
+        // 4. Check: Charlie received <charliePreviewShares> shares (should match)
+        assertEq(charlieShares, charliePreviewShares, "Charlie should get previewed shares for post-donation deposit");
+
+        // Since shares are distributed proportionally, Charlie's shares should be less than Alice's for equal depositAmount
+        assertLt(
+            charlieShares,
+            aliceShares,
+            "Charlie should receive fewer shares than Alice for the same deposit, since supply increased due to donation"
+        );
+
+        assertEq(
+            stakedLPStrategy.totalAssets(),
+            aliceLp + bobLp + charlieLp,
+            "Vault total assets reflect all deposits and donations"
+        );
+        assertEq(
+            stakedLPStrategy.totalSupply(),
+            aliceShares + charlieShares,
+            "Total supply reflects both real deposits, not donation"
+        );
+
+        // 5. Alice withdraws -- should receive more than her original deposit due to Bob's donation
+        vm.startPrank(alice);
+        uint256 aliceWithdrawn = stakedLPStrategy.redeem(aliceShares, alice, alice);
+        vm.stopPrank();
+
+        // Alice should get at least her preview value, which should be higher than aliceLp
+        assertApproxEqAbs(
+            aliceWithdrawn, stakedLPStrategy.previewRedeem(aliceShares), 1, "Actual asset redeemed matches preview"
+        );
+        assertGt(aliceWithdrawn, aliceLp, "Alice's redeemed assets should be increased by original donation");
+
+        // 6. Charlie withdraws -- gets his proportional share
+        vm.startPrank(charlie);
+        uint256 charliePreviewAssets = stakedLPStrategy.previewRedeem(charlieShares);
+        uint256 charlieWithdrawn = stakedLPStrategy.redeem(charlieShares, charlie, charlie);
+        vm.stopPrank();
+
+        assertEq(charlieWithdrawn, charliePreviewAssets, "Charlie's redeemed assets match preview");
+        // He will also get a small boost attributable to the donation
+
+        // 7. Vault: all assets should now be gone, only any remainder (dust) from rounding
+        assertLe(
+            stakedLPStrategy.totalAssets(),
+            2, // there may be 1 or 2 wei (dust) left due to rounding/truncation
+            "Vault assets after all shares burned should be dust"
+        );
+        assertEq(stakedLPStrategy.totalSupply(), 0, "Total supply is zero after all withdraws");
+    }
 }
