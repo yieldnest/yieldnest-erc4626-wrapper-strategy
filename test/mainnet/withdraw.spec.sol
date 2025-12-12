@@ -70,6 +70,58 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         vm.stopPrank();
     }
 
+    function test_fuzz_initial_redeem_success(uint256 depositAmount, uint256 redeemAmount) public {
+        // Fuzz deposit bounds: 1 USDC min, 1_000_000 USDC max (6 decimals)
+        depositAmount = bound(depositAmount, 1e6, 1_000_000e6);
+
+        address alice = makeAddr("alice");
+
+        deal(MC.USDC, alice, depositAmount);
+
+        uint256 lpBalance = deposit_lp(alice, depositAmount);
+
+        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+
+        vm.startPrank(alice);
+
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+
+        uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
+
+        uint256 aliceShareBalance = IERC20(stakedLPStrategy).balanceOf(alice);
+
+        assertEq(aliceShareBalance, shares, "Share amount mismatch after fuzz deposit");
+
+        redeemAmount = bound(redeemAmount, 1, depositAmount);
+
+        uint256 withdrawShares = shares;
+
+        uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
+
+        uint256 assetsRedeemed = stakedLPStrategy.redeem(shares, alice, alice);
+
+        // LP tokens should increase by exactly assetsRedeemed
+        uint256 postLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        assertEq(
+            postLpBalance, preLpBalance + assetsRedeemed, "LP token balance did not increase as expected after redeem"
+        );
+
+        // Alice's share balance should go to zero (all shares redeemed)
+        uint256 aliceBalanceAfter = IERC20(stakedLPStrategy).balanceOf(alice);
+        assertEq(aliceBalanceAfter, 0, "Share balance should be zero after redeem");
+
+        // Assert the StakeDao gauge LP balance in the vault decreased by assetsRedeemed
+        uint256 postStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
+        assertEq(
+            postStakeDaoBalance,
+            preStakeDaoBalance - assetsRedeemed,
+            "StakeDao LP balance in vault did not decrease by redeemed amount"
+        );
+
+        vm.stopPrank();
+    }
+
     function test_withdraw_single_sided() public {
         address alice = makeAddr("alice");
 
