@@ -198,4 +198,57 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         vm.stopPrank();
     }
+
+    function test_withdraw_after_deposit_and_donation() public {
+        address alice = makeAddr("alice");
+        address bob = makeAddr("bob");
+
+        // Alice and Bob are both funded with USDC to mint LP tokens
+        uint256 depositAmount = 100_000e6;
+        deal(MC.USDC, alice, depositAmount);
+        deal(MC.USDC, bob, depositAmount);
+
+        // Alice receives LP tokens and deposits them into the strategy
+        uint256 aliceLp = deposit_lp(alice, depositAmount);
+        vm.startPrank(alice);
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), aliceLp);
+        uint256 aliceShares = stakedLPStrategy.deposit(aliceLp, alice);
+        vm.stopPrank();
+
+        // Bob mints LP tokens, but DONATES them directly to the vault (does not call deposit)
+        uint256 bobLp = deposit_lp(bob, depositAmount);
+        // Send LP directly to the strategy, increasing totalAssets but not shares
+        deal(MC.CURVE_ynRWAx_USDC_LP, bob, bobLp);
+        vm.startPrank(bob);
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).transfer(address(stakedLPStrategy), bobLp);
+        vm.stopPrank();
+
+        // At this point alice has all the shares, but the vault has double the assets
+        uint256 totalAssets = stakedLPStrategy.totalAssets();
+        assertEq(totalAssets, aliceLp + bobLp, "Total assets should include Alice's deposit and Bob's donation");
+        assertEq(stakedLPStrategy.totalSupply(), aliceShares, "Total supply should only be Alice's shares");
+
+        // Alice withdra    ws all her shares for LP tokens
+        vm.startPrank(alice);
+        uint256 aliceInitialShares = stakedLPStrategy.balanceOf(alice);
+
+        uint256 aliceLpBalanceBefore = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+
+        // previewRedeem: how many LP tokens should Alice receive for redeeming all her shares?
+        uint256 previewAssets = stakedLPStrategy.previewRedeem(aliceInitialShares);
+
+        uint256 withdrawn = stakedLPStrategy.redeem(aliceInitialShares, alice, alice);
+
+        assertEq(withdrawn, previewAssets, "Alice withdrawn LP should match previewRedeem");
+        assertEq(stakedLPStrategy.balanceOf(alice), 0, "Alice should have 0 shares after redeeming all");
+
+        // Alice gets more than her original deposit, due to Bob's donation
+        uint256 aliceLpBalanceAfter = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        assertGt(aliceLpBalanceAfter - aliceLpBalanceBefore, aliceLp, "Alice profit includes Bob's donation");
+
+        // The strategy vault should now have only Bob's donation (since Alice withdrew her share)
+        assertEq(stakedLPStrategy.totalAssets(), totalAssets - withdrawn, "Vault assets should decrease by withdrawn");
+        assertEq(stakedLPStrategy.totalSupply(), 0, "All shares burned after Alice's withdrawal");
+        vm.stopPrank();
+    }
 }

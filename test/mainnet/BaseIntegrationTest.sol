@@ -79,5 +79,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
         amounts[0] = halfAmount;
         amounts[1] = halfAmount;
         return ICurvePool(curveLp).add_liquidity(amounts, 0);
+
+        vm.stopPrank();
     }
 }

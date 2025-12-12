@@ -94,6 +94,13 @@ contract ERC4626WrapperHooks is IHooks {
             uint256[] memory values = new uint256[](1);
             bytes[] memory data = new bytes[](1);
 
+            // if assets is greater than the max withdraw amount, set assets to the max withdraw amount
+            // this can be the case if there is is vault.asset() balance in the vault (outside of the targetVault)
+            uint256 maxWithdrawAmount = targetVault.maxWithdraw(address(vault));
+            if (assets > maxWithdrawAmount) {
+                assets = maxWithdrawAmount;
+            }
+
             // 1. Call withdraw on the target vault (assuming withdraw(uint256,address,address) interface)
             targets[0] = address(targetVault);
             values[0] = 0;
