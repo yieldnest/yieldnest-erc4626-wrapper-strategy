@@ -90,8 +90,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         redeemAmount = bound(redeemAmount, 1, depositAmount);
 
-        uint256 withdrawShares = shares;
-
         uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
         uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
 
