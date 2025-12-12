@@ -22,8 +22,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         deposit_lp(alice, depositAmount);
 
-        address vault = MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT;
-
         // Find how much LP tokens alice received (query balance)
         uint256 lpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
 
@@ -57,14 +55,22 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Alice approves strategy to spend her stakedao LP tokens
         IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
 
-        console.log("Alice's LP balance:", lpBalance);
-
-        // Deposit to the strategy (assumes deposit(uint256, address) present, else update selector)
+        // Deposit to the strategy
         uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
 
-        // Alice's strategy share balance increases
+        // Alice's strategy share balance increases, equals shares, equals lpBalance
         uint256 aliceShareBalance = IERC20(stakedLPStrategy).balanceOf(alice);
-        console.log("Alice strategy share balance:", aliceShareBalance);
+
+        assertEq(aliceShareBalance, shares, "Share amount mismatch after deposit");
+        assertEq(aliceShareBalance, lpBalance, "Alice strategy share balance should match lpBalance");
+        assertEq(
+            IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice),
+            0,
+            "Alice's stakedao LP balance should be zero after strategy deposit"
+        );
+        assertEq(stakedLPStrategy.balanceOf(alice), lpBalance, "Alice's stakedao gauge balance mismatch");
+        assertEq(stakedLPStrategy.totalAssets(), lpBalance, "Total assets mismatch after deposit");
+        assertEq(stakedLPStrategy.totalSupply(), lpBalance, "Total supply mismatch after deposit");
 
         vm.stopPrank();
     }
@@ -131,9 +137,10 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 desiredShares = stakedLPStrategy.previewDeposit(lpBalance);
 
         // Mint desired shares
-        uint256 shares = stakedLPStrategy.mint(desiredShares, alice);
+        uint256 assetsDeposited = stakedLPStrategy.mint(desiredShares, alice);
 
         assertEq(IERC20(stakedLPStrategy).balanceOf(alice), desiredShares, "Alice's stakedao gauge balance mismatch");
+        assertEq(assetsDeposited, lpBalance, "Assets deposited mismatch");
 
         // Assert totalAssets and totalSupply changed accordingly
         uint256 afterTotalAssets = stakedLPStrategy.totalAssets();
