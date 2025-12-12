@@ -107,4 +107,41 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             "Vault balance of stakedao LP mismatch"
         );
     }
+
+    function test_initial_mint_success() public {
+        uint256 mintAmount = 100e6;
+
+        address alice = makeAddr("alice");
+
+        deal(MC.USDC, alice, mintAmount);
+
+        uint256 lpBalance = deposit_lp(alice, mintAmount);
+
+        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+
+        // Record totalAssets and totalSupply before mint
+        uint256 beforeTotalAssets = stakedLPStrategy.totalAssets();
+        uint256 beforeTotalSupply = stakedLPStrategy.totalSupply();
+
+        vm.startPrank(alice);
+
+        // Alice approves strategy to spend her stakedao LP tokens
+        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+
+        uint256 desiredShares = stakedLPStrategy.previewDeposit(lpBalance);
+
+        // Mint desired shares
+        uint256 shares = stakedLPStrategy.mint(desiredShares, alice);
+
+        assertEq(IERC20(stakedLPStrategy).balanceOf(alice), desiredShares, "Alice's stakedao gauge balance mismatch");
+
+        // Assert totalAssets and totalSupply changed accordingly
+        uint256 afterTotalAssets = stakedLPStrategy.totalAssets();
+        uint256 afterTotalSupply = stakedLPStrategy.totalSupply();
+
+        assertEq(afterTotalAssets, beforeTotalAssets + lpBalance, "totalAssets did not increase by deposited assets");
+        assertEq(afterTotalSupply, beforeTotalSupply + desiredShares, "totalSupply did not increase by minted shares");
+
+        vm.stopPrank();
+    }
 }

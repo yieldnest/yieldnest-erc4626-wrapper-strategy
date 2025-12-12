@@ -111,7 +111,8 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
         address[] memory assets = getAssets();
         if (asset_ == assets[0]) {
             IERC4626 vault = IERC4626(assets[1]);
-            availableAssets = IERC20(asset_).balanceOf(address(this)) + vault.convertToAssets(vault.balanceOf(address(this)));
+            availableAssets =
+                IERC20(asset_).balanceOf(address(this)) + vault.convertToAssets(vault.balanceOf(address(this)));
         } else {
             availableAssets = super._availableAssets(asset_);
         }
