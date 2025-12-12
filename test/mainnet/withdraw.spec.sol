@@ -17,8 +17,6 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Fuzz deposit bounds: 1 USDC min, 1_000_000 USDC max (6 decimals)
         depositAmount = bound(depositAmount, 1e6, 1_000_000e6);
 
-        uint256 depositAmount = 100e6;
-
         address alice = makeAddr("alice");
 
         deal(MC.USDC, alice, depositAmount);
@@ -38,9 +36,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(aliceShareBalance, shares, "Share amount mismatch after fuzz deposit");
 
         // Bound withdrawShares between 0 and shares
-        // withdrawShares = bound(withdrawShares, 1, shares - 100);
-
-        uint256 withdrawShares = shares;
+        withdrawShares = bound(withdrawShares, 1, shares);
 
         uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
         uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
