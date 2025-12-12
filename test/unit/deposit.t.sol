@@ -64,4 +64,44 @@ contract DepositUnitTest is BaseUnitTest {
             );
         }
     }
+
+    function test_mint_then_donate_to_erc4626_then_mint_again() public {
+        // First mint
+        deal(address(mockERC20), alice, 1000e18);
+        vm.startPrank(alice);
+        mockERC20.approve(address(stakedLPStrategy), 1000e18);
+        stakedLPStrategy.mint(1000e18, alice);
+        uint256 sharesAfterFirst = stakedLPStrategy.balanceOf(alice);
+        assertEq(sharesAfterFirst, 1000e18, "Shares after first mint should equal minted shares");
+        vm.stopPrank();
+
+        {
+            // Donate to ERC4626 vault (simulate someone else sending funds) using an intermediary holder
+            address intermediary = address(0xBEEF);
+            deal(address(mockERC20), intermediary, 500e18);
+            vm.startPrank(intermediary);
+            mockERC20.transfer(address(mockERC4626), 500e18);
+            vm.stopPrank();
+        }
+
+        {
+            uint256 secondMintAmount = 1000e18;
+            // Calculate the amount of assets that need to be deposited to mint the requested shares
+            uint256 secondMintShares = stakedLPStrategy.previewDeposit(secondMintAmount);
+
+            uint256 assetsBefore = mockERC4626.totalAssets();
+            deal(address(mockERC20), alice, secondMintAmount);
+            vm.startPrank(alice);
+            mockERC20.approve(address(stakedLPStrategy), secondMintAmount);
+            stakedLPStrategy.mint(secondMintShares, alice);
+            vm.stopPrank();
+            uint256 assetsAfter = mockERC4626.totalAssets();
+            assertApproxEqAbs(
+                assetsAfter,
+                assetsBefore + secondMintAmount,
+                1,
+                "Vault assets should increase by assets deposited for second mint"
+            );
+        }
+    }
 }
