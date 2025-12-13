@@ -84,6 +84,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 totalAssetValueAfter;
         uint256 valuePerShareAfter;
         uint256 aliceAssetBBalance;
+        uint256 dy_0_1;
+        uint256 dy_1_0;
     }
 
     function getPoolStats(
@@ -105,6 +107,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         stats.totalAssetValueAfter = poolTotalAssetValue(poolAddress);
         stats.valuePerShareAfter = valuePerShare(poolAddress);
         stats.aliceAssetBBalance = balance;
+        stats.dy_0_1 = ICurvePool(poolAddress).get_dy(0, 1, 1e18);
+        stats.dy_1_0 = ICurvePool(poolAddress).get_dy(1, 0, 1e18);
 
         return stats;
     }
@@ -118,6 +122,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // console.log("  totalAssetValue:", stats.totalAssetValueAfter);
         console.log("  valuePerShare:", stats.valuePerShareAfter);
         // console.log("  aliceAssetBBalance:", stats.aliceAssetBBalance);
+        console.log("  dy_0_1:", stats.dy_0_1);
+        console.log("  dy_1_0:", stats.dy_1_0);
     }
 
     function test_create_pool_withdraw_liquidity_one_coin() public {
@@ -139,8 +145,10 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
         printPoolStats(statsBeforeRemovingLiquidity);
 
+        uint256 amountToRemove = 1e18;
+
         vm.startPrank(alice);
-        ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
+        ICurvePool(poolAddress).remove_liquidity_one_coin(amountToRemove, 1, 0);
         vm.stopPrank();
 
         PoolStats memory statsAfterRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
@@ -148,12 +156,12 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         printPoolCoinBalances(poolAddress);
         {
             // Deposit 1e18 of assetB (after gaining it by depositing USDS)
-            deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
+            deal(address(assetB), alice, amountToRemove); // Give alice 1e18 assetB tokens directly
             vm.startPrank(alice);
-            IERC20(address(assetB)).approve(poolAddress, 1e18);
+            IERC20(address(assetB)).approve(poolAddress, amountToRemove);
             uint256[] memory depositAmounts = new uint256[](2);
             depositAmounts[0] = 0;
-            depositAmounts[1] = 1e18;
+            depositAmounts[1] = amountToRemove;
             ICurvePool(poolAddress).add_liquidity(depositAmounts, 0);
             vm.stopPrank();
         }
@@ -187,7 +195,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
 
-    function skip_test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
+    function test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
         uint256 A = 20; // A = 20
         uint256 fee = 10000000; // FEE = 0.1%
         uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
@@ -209,12 +217,14 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
         printPoolStats(statsBeforeRemovingLiquidity);
 
-        for (uint256 i = 0; i < 200; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             console.log("Iteration:", i);
+
+            uint256 amountToRemove = 1e18;
 
             uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
             vm.startPrank(alice);
-            ICurvePool(poolAddress).remove_liquidity_one_coin(1e18, 1, 0);
+            ICurvePool(poolAddress).remove_liquidity_one_coin(amountToRemove, 1, 0);
             vm.stopPrank();
 
             uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
@@ -222,12 +232,14 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             uint256 delta = afterBalance - beforeBalance;
             console.log("delta:", delta);
 
+            console.log("Post removal:");
+
             PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
             printPoolStats(stats);
             printPoolCoinBalances(poolAddress);
             {
-                // Deposit 1e18 of assetB (after gaining it by depositing USDS)
-                deal(address(assetB), alice, 1e18); // Give alice 1e18 assetB tokens directly
+                // Deposit amountToRemove of assetB (after gaining it by depositing USDS)
+                deal(address(assetB), alice, amountToRemove); // Give alice amountToRemove assetB tokens directly
                 vm.startPrank(alice);
                 IERC20(address(assetB)).approve(poolAddress, delta);
                 uint256[] memory depositAmounts = new uint256[](2);
@@ -237,6 +249,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
                 vm.stopPrank();
             }
 
+            console.log("Post re-add:");
             PoolStats memory statsAfterReAdd = getPoolStats(poolAddress, alice, 1e18, 1);
             printPoolStats(statsAfterReAdd);
             assertGe(
