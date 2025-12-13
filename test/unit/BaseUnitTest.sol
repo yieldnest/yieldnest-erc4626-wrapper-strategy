@@ -55,6 +55,7 @@ contract BaseUnitTest is Test, AssertUtils {
         stakedLPStrategy.grantRole(stakedLPStrategy.PROCESSOR_MANAGER_ROLE(), ADMIN);
         stakedLPStrategy.grantRole(stakedLPStrategy.ALLOCATOR_MANAGER_ROLE(), ADMIN);
         stakedLPStrategy.grantRole(stakedLPStrategy.HOOKS_MANAGER_ROLE(), ADMIN);
+        stakedLPStrategy.grantRole(stakedLPStrategy.FEE_MANAGER_ROLE(), ADMIN);
         vm.stopPrank();
 
         vm.startPrank(ADMIN);

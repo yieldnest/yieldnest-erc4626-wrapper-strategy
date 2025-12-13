@@ -103,5 +103,9 @@ contract DepositUnitTest is BaseUnitTest {
                 "Vault assets should increase by assets deposited for second mint"
             );
         }
+
+        uint256 assetsPerShare = mockERC4626.convertToAssets(1e18);
+        // After a 50% donation, with no rounding/fees, the assets per share should be greater than 1e18
+        assertApproxEqAbs(assetsPerShare, 1.5e18, 1, "convertToAssets: rate should be greater than 1 after donation");
     }
 }
