@@ -24,6 +24,7 @@ contract StrategyDeployer {
         uint8 decimals;
         IActors actors;
         address targetVault;
+        bool countNativeAsset;
         Implementations implementations;
     }
 
@@ -38,6 +39,7 @@ contract StrategyDeployer {
     string public name;
     string public symbol_;
     uint8 public decimals;
+    bool public countNativeAsset;
     IProvider public rateProvider;
     TimelockController public timelock;
     IActors public actors;
@@ -57,6 +59,7 @@ contract StrategyDeployer {
         symbol_ = params.symbol;
         decimals = params.decimals;
         targetVault = params.targetVault;
+        countNativeAsset = params.countNativeAsset;
         implementations = params.implementations;
     }
 
@@ -91,7 +94,8 @@ contract StrategyDeployer {
                                 alwaysComputeTotalAssets_: true, // for fee collection
                                 defaultAssetIndex_: 0,
                                 vault_: targetVault,
-                                provider_: address(rateProvider)
+                                provider_: address(rateProvider),
+                                countNativeAsset_: countNativeAsset
                             })
                         )
                     )

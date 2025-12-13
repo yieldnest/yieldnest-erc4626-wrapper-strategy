@@ -22,6 +22,7 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
         uint256 defaultAssetIndex_;
         address vault_;
         address provider_;
+        bool countNativeAsset_;
     }
 
     /**
@@ -35,7 +36,7 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
             params.symbol,
             params.decimals_,
             true, // paused
-            false, // countNativeAsset_ is false because the strategy does not hold the native asset
+            params.countNativeAsset_,
             params.alwaysComputeTotalAssets_,
             params.defaultAssetIndex_
         );

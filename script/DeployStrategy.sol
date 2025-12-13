@@ -40,6 +40,7 @@ contract DeployStrategy is BaseScript {
                 decimals: decimals,
                 actors: actors,
                 targetVault: targetVault,
+                countNativeAsset: countNativeAsset,
                 implementations: implementations
             })
         );

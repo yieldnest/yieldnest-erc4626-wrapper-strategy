@@ -41,7 +41,8 @@ contract BaseUnitTest is Test, AssertUtils {
             alwaysComputeTotalAssets_: true,
             defaultAssetIndex_: 0,
             vault_: address(mockERC4626),
-            provider_: address(new Provider(address(mockERC4626)))
+            provider_: address(new Provider(address(mockERC4626))),
+            countNativeAsset_: false
         });
         stakedLPStrategy.initialize(params);
 

@@ -232,7 +232,6 @@ contract WithdrawUnitTest is BaseUnitTest {
         // Bound inputs to reasonable ranges
         depositAmount = bound(depositAmount, 1e18, 1e30);
         donationAmount = bound(donationAmount, 1e18, 1e30);
-        uint256 totalAssets = depositAmount + donationAmount;
         withdrawAmount = bound(withdrawAmount, 1, depositAmount);
 
         // Arrange: Alice deposits tokens
