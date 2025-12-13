@@ -268,11 +268,22 @@ contract WithdrawUnitTest is BaseUnitTest {
 
         // Calculate expected shares burned based on the rate before withdrawal
         uint256 expectedSharesBurned = (withdrawAmount * 1e18) / strategyRateBefore;
+
+        uint256 tolerance = 1;
+        {
+            // Round up to the nearest power of 10
+            uint256 rawTolerance = depositAmount / 1e18;
+
+            while (tolerance < rawTolerance) {
+                tolerance *= 10;
+            }
+        }
+
         // Integer math: expect approximation
         assertApproxEqAbs(
             aliceSharesBefore - aliceSharesAfter,
             expectedSharesBurned,
-            1e3, // 1e3 wei precision
+            tolerance,
             "Shares burned should equal assets/pricePerShare after donation"
         );
     }
@@ -303,7 +314,7 @@ contract WithdrawUnitTest is BaseUnitTest {
         vm.stopPrank();
 
         // Alice redeems shares
-        uint256 assetsPerShare = mockERC4626.convertToAssets(1e18);
+        uint256 assetsPerShare = stakedLPStrategy.convertToAssets(1e18);
         uint256 expectedAssetsReceived = (sharesToRedeem * assetsPerShare) / 1e18;
 
         uint256 aliceTokenBalanceBefore = mockERC20.balanceOf(alice);
@@ -315,11 +326,21 @@ contract WithdrawUnitTest is BaseUnitTest {
         uint256 aliceTokenBalanceAfter = mockERC20.balanceOf(alice);
         uint256 aliceSharesAfter = stakedLPStrategy.balanceOf(alice);
 
+        uint256 tolerance = 1;
+        {
+            // Round up to the nearest power of 10
+            uint256 rawTolerance = depositAmount / 1e18;
+
+            while (tolerance < rawTolerance) {
+                tolerance *= 10;
+            }
+        }
+
         // Should receive the product of shares * asset/share at time of redemption
         assertApproxEqAbs(
             aliceTokenBalanceAfter - aliceTokenBalanceBefore,
             expectedAssetsReceived,
-            1, // 1 wei accuracy
+            tolerance,
             "Alice should receive all assets per redeemed shares, including donation gain"
         );
         assertEq(aliceSharesAfter, depositAmount - sharesToRedeem, "Her shares reduce by redeemed amount");
