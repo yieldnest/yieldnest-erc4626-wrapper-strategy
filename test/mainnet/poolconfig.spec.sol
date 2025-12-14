@@ -204,18 +204,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
 
-    function test_swap_slippage() public {
-        uint256 A = 100; // A = 20
-        uint256 fee = 0; // 10000000; // FEE = 0.1%
-        uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
-        uint256 ma_exp_time = 1010;
-
-        address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
-
-        _depositToPool(poolAddress, alice, 1e18, 1e18);
-
-        uint256 amountToRemove = 0.6e18;
-
+    function runSlippageTest(address poolAddress, uint256 amountToRemove) public {
         uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
         vm.startPrank(alice);
         ICurvePool(poolAddress).remove_liquidity_one_coin(amountToRemove, 1, 0);
@@ -246,6 +235,23 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
             console.log("amountReceived:", amountReceived);
             console.log("deltaAssetB:", deltaAssetB);
+        }
+    }
+
+    function test_swap_slippage() public {
+        for (uint256 i = 0; i < 1; i++) {
+            uint256 A = 100; // A = 20
+            uint256 fee = 0; // 10000000; // FEE = 0.1%
+            uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
+            uint256 ma_exp_time = 1010;
+
+            address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+
+            _depositToPool(poolAddress, alice, 1e18, 1e18);
+
+            uint256 amountToRemove = 0.6e18;
+
+            runSlippageTest(poolAddress, amountToRemove);
         }
     }
 
