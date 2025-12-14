@@ -309,18 +309,18 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
     function test_swap_slippage() public {
         uint256 withdrawalSizeIncrements = 10;
-        uint256 aFactorIncrements = 10;
+        uint256 aFactorIncrements = 13;
         RunSlippageTestResult[] memory results =
             new RunSlippageTestResult[](withdrawalSizeIncrements * aFactorIncrements);
 
         uint256 baseSnap;
 
         uint256 index = 0;
-        for (uint256 j = 1; j <= aFactorIncrements; j++) {
+        for (uint256 j = 0; j < aFactorIncrements; j++) {
             for (uint256 i = 0; i < withdrawalSizeIncrements; i++) {
                 baseSnap = vm.snapshot();
 
-                uint256 A = 10 * j; // A = 20
+                uint256 A = 20 + 10 * j * 2; // A = 20
                 uint256 fee = 0; // 10000000; // FEE = 0.1%
                 uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
                 uint256 ma_exp_time = 1010;
