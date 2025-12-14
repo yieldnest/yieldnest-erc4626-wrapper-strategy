@@ -234,7 +234,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         {
             // INSERT_YOUR_CODE
-            uint256 amountToSell = 0.1e18;
+            uint256 amountToSell = 0.001e18;
             deal(address(assetA), alice, amountToSell); // Give alice 0.1e18 assetA
             uint256 assetBBefore = IERC20(address(assetB)).balanceOf(alice);
             vm.startPrank(alice);
