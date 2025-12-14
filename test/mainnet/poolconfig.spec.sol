@@ -210,9 +210,52 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 offpegFeeMultiplier;
         uint256 deltaAssetB;
         uint256 slippage;
+        uint256 amountToRemove;
         uint256 amountReceived;
         uint256 assetAAmount;
         uint256 assetBAmount;
+    }
+
+    function writeResultsToJson(RunSlippageTestResult[] memory results, string memory filePath) internal {
+        string memory json = "[";
+        for (uint256 i = 0; i < results.length; i++) {
+            json = string.concat(
+                json,
+                "{",
+                '"aFactor":',
+                vm.toString(results[i].aFactor),
+                ",",
+                '"fee":',
+                vm.toString(results[i].fee),
+                ",",
+                '"offpegFeeMultiplier":',
+                vm.toString(results[i].offpegFeeMultiplier),
+                ",",
+                '"deltaAssetB":',
+                vm.toString(results[i].deltaAssetB),
+                ",",
+                '"slippage":',
+                vm.toString(results[i].slippage),
+                ",",
+                '"amountToRemove":',
+                vm.toString(results[i].amountToRemove),
+                ",",
+                '"amountReceived":',
+                vm.toString(results[i].amountReceived),
+                ",",
+                '"assetAAmount":',
+                vm.toString(results[i].assetAAmount),
+                ",",
+                '"assetBAmount":',
+                vm.toString(results[i].assetBAmount),
+                "}"
+            );
+            if (i < results.length - 1) {
+                json = string.concat(json, ",");
+            }
+        }
+        json = string.concat(json, "]");
+        vm.writeFile(filePath, json);
     }
 
     function runSlippageTest(address poolAddress, uint256 amountToRemove)
@@ -257,6 +300,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
             result.slippage = slippage;
             result.deltaAssetB = deltaAssetB;
+            result.amountToRemove = amountToRemove;
             result.amountReceived = amountReceived;
             result.assetAAmount = IERC20(address(assetA)).balanceOf(poolAddress);
             result.assetBAmount = IERC20(address(assetB)).balanceOf(poolAddress);
@@ -272,8 +316,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 baseSnap;
 
         uint256 index = 0;
-        for (uint256 i = 0; i < withdrawalSizeIncrements; i++) {
-            for (uint256 j = 1; j <= aFactorIncrements; j++) {
+        for (uint256 j = 1; j <= aFactorIncrements; j++) {
+            for (uint256 i = 0; i < withdrawalSizeIncrements; i++) {
                 baseSnap = vm.snapshot();
 
                 uint256 A = 10 * j; // A = 20
@@ -300,6 +344,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         }
 
         console.log("results.length:", results.length);
+
+        writeResultsToJson(results, "./test-results/slippage_results.json");
     }
 
     function runLoopWithParams(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time) public {

@@ -26,6 +26,7 @@ allow_internal_expect_revert = true
 fs_permissions = [
   { access = "read-write", path = "./deployments" },
   { access = "read", path = "./" },
+  { access = "read-write", path ="./test-results"}
 ]
 
 
