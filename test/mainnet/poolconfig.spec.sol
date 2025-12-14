@@ -196,12 +196,57 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     }
 
     function test_create_pool_A_20_offpeg_20_fee_1000000_loop_withdraw_liquidity_one_coin() public {
-        uint256 A = 20; // A = 20
-        uint256 fee = 10000000; // FEE = 0.1%
+        uint256 A = 100; // A = 20
+        uint256 fee = 0; // 10000000; // FEE = 0.1%
         uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
         uint256 ma_exp_time = 1010;
 
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
+    }
+
+    function test_swap_slippage() public {
+        uint256 A = 100; // A = 20
+        uint256 fee = 0; // 10000000; // FEE = 0.1%
+        uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
+        uint256 ma_exp_time = 1010;
+
+        address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+
+        _depositToPool(poolAddress, alice, 1e18, 1e18);
+
+        uint256 amountToRemove = 0.6e18;
+
+        uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
+        vm.startPrank(alice);
+        ICurvePool(poolAddress).remove_liquidity_one_coin(amountToRemove, 1, 0);
+        vm.stopPrank();
+
+        uint256 afterBalance = IERC20(address(assetB)).balanceOf(alice);
+
+        uint256 delta = afterBalance - beforeBalance;
+        console.log("delta:", delta);
+
+        console.log("Post removal:");
+
+        PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
+        printPoolStats(stats);
+        printPoolCoinBalances(poolAddress);
+
+        {
+            // INSERT_YOUR_CODE
+            uint256 amountToSell = 0.1e18;
+            deal(address(assetA), alice, amountToSell); // Give alice 0.1e18 assetA
+            uint256 assetBBefore = IERC20(address(assetB)).balanceOf(alice);
+            vm.startPrank(alice);
+            IERC20(address(assetA)).approve(poolAddress, amountToSell);
+            uint256 amountReceived = ICurvePool(poolAddress).exchange(0, 1, amountToSell, 0); // Sell assetA (index 0) for assetB (index 1)
+            vm.stopPrank();
+            uint256 assetBAfter = IERC20(address(assetB)).balanceOf(alice);
+            uint256 deltaAssetB = assetBAfter - assetBBefore;
+
+            console.log("amountReceived:", amountReceived);
+            console.log("deltaAssetB:", deltaAssetB);
+        }
     }
 
     function runLoopWithParams(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time) public {
@@ -217,10 +262,10 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         PoolStats memory statsBeforeRemovingLiquidity = getPoolStats(poolAddress, alice, 1e18, 1);
         printPoolStats(statsBeforeRemovingLiquidity);
 
-        for (uint256 i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 1; i++) {
             console.log("Iteration:", i);
 
-            uint256 amountToRemove = 1e18;
+            uint256 amountToRemove = 0.6e18;
 
             uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
             vm.startPrank(alice);
@@ -237,9 +282,10 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             PoolStats memory stats = getPoolStats(poolAddress, alice, 1e18, 1);
             printPoolStats(stats);
             printPoolCoinBalances(poolAddress);
+
             {
                 // Deposit amountToRemove of assetB (after gaining it by depositing USDS)
-                deal(address(assetB), alice, amountToRemove); // Give alice amountToRemove assetB tokens directly
+                deal(address(assetB), alice, 1e18); // Give alice amountToRemove assetB tokens directly
                 vm.startPrank(alice);
                 IERC20(address(assetB)).approve(poolAddress, delta);
                 uint256[] memory depositAmounts = new uint256[](2);
