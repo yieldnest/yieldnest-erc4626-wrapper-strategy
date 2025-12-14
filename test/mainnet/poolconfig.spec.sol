@@ -285,7 +285,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
                 _depositToPool(poolAddress, alice, 1e18, 1e18);
 
-                uint256 amountToRemove = 0.6e18;
+                uint256 amountToRemove = 0.1e18 * (i + 1);
 
                 RunSlippageTestResult memory result;
                 result = runSlippageTest(poolAddress, amountToRemove);
