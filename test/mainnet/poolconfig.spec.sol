@@ -208,6 +208,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 deltaAssetB;
         uint256 slippage;
         uint256 amountReceived;
+        uint256 assetAAmount;
+        uint256 assetBAmount;
     }
 
     function runSlippageTest(address poolAddress, uint256 amountToRemove)
@@ -253,10 +255,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
             result.slippage = slippage;
             result.deltaAssetB = deltaAssetB;
             result.amountReceived = amountReceived;
+            result.assetAAmount = IERC20(address(assetA)).balanceOf(poolAddress);
+            result.assetBAmount = IERC20(address(assetB)).balanceOf(poolAddress);
         }
     }
 
     function test_swap_slippage() public {
+        uint256 totalIterations = 1;
+        RunSlippageTestResult[] memory results = new RunSlippageTestResult[](totalIterations);
+
+        uint256 index = 0;
         for (uint256 i = 0; i < 1; i++) {
             uint256 A = 100; // A = 20
             uint256 fee = 0; // 10000000; // FEE = 0.1%
@@ -269,7 +277,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
             uint256 amountToRemove = 0.6e18;
 
-            runSlippageTest(poolAddress, amountToRemove);
+            results[index++] = runSlippageTest(poolAddress, amountToRemove);
         }
     }
 
