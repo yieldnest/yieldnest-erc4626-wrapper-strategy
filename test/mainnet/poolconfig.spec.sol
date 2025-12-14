@@ -205,6 +205,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     }
 
     struct RunSlippageTestResult {
+        uint256 aFactor;
+        uint256 fee;
+        uint256 offpegFeeMultiplier;
         uint256 deltaAssetB;
         uint256 slippage;
         uint256 amountReceived;
@@ -261,24 +264,42 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     }
 
     function test_swap_slippage() public {
-        uint256 totalIterations = 1;
-        RunSlippageTestResult[] memory results = new RunSlippageTestResult[](totalIterations);
+        uint256 withdrawalSizeIncrements = 10;
+        uint256 aFactorIncrements = 10;
+        RunSlippageTestResult[] memory results =
+            new RunSlippageTestResult[](withdrawalSizeIncrements * aFactorIncrements);
+
+        uint256 baseSnap;
 
         uint256 index = 0;
-        for (uint256 i = 0; i < 1; i++) {
-            uint256 A = 100; // A = 20
-            uint256 fee = 0; // 10000000; // FEE = 0.1%
-            uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
-            uint256 ma_exp_time = 1010;
+        for (uint256 i = 0; i < withdrawalSizeIncrements; i++) {
+            for (uint256 j = 1; j <= aFactorIncrements; j++) {
+                baseSnap = vm.snapshot();
 
-            address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
+                uint256 A = 10 * j; // A = 20
+                uint256 fee = 0; // 10000000; // FEE = 0.1%
+                uint256 offpegFeeMultiplier = 200000000000; // OFPEG = 20
+                uint256 ma_exp_time = 1010;
 
-            _depositToPool(poolAddress, alice, 1e18, 1e18);
+                address poolAddress = create_pool(A, fee, offpegFeeMultiplier, ma_exp_time);
 
-            uint256 amountToRemove = 0.6e18;
+                _depositToPool(poolAddress, alice, 1e18, 1e18);
 
-            results[index++] = runSlippageTest(poolAddress, amountToRemove);
+                uint256 amountToRemove = 0.6e18;
+
+                RunSlippageTestResult memory result;
+                result = runSlippageTest(poolAddress, amountToRemove);
+
+                result.aFactor = A;
+                result.fee = fee;
+                result.offpegFeeMultiplier = offpegFeeMultiplier;
+                results[index++] = result;
+
+                vm.revertTo(baseSnap);
+            }
         }
+
+        console.log("results.length:", results.length);
     }
 
     function runLoopWithParams(uint256 A, uint256 fee, uint256 offpegFeeMultiplier, uint256 ma_exp_time) public {
