@@ -204,7 +204,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         runLoopWithParams(A, fee, offpegFeeMultiplier, ma_exp_time);
     }
 
-    function runSlippageTest(address poolAddress, uint256 amountToRemove) public {
+    struct RunSlippageTestResult {
+        uint256 deltaAssetB;
+        uint256 slippage;
+        uint256 amountReceived;
+    }
+
+    function runSlippageTest(address poolAddress, uint256 amountToRemove)
+        public
+        returns (RunSlippageTestResult memory result)
+    {
         uint256 beforeBalance = IERC20(address(assetB)).balanceOf(alice);
         vm.startPrank(alice);
         ICurvePool(poolAddress).remove_liquidity_one_coin(amountToRemove, 1, 0);
@@ -235,6 +244,15 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
             console.log("amountReceived:", amountReceived);
             console.log("deltaAssetB:", deltaAssetB);
+
+            assertEq(deltaAssetB, amountReceived);
+
+            uint256 slippage = (amountToSell - amountReceived) * 1e18 / amountToSell;
+            console.log("slippage:", slippage);
+
+            result.slippage = slippage;
+            result.deltaAssetB = deltaAssetB;
+            result.amountReceived = amountReceived;
         }
     }
 
