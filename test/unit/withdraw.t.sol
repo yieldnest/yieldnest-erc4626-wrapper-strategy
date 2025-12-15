@@ -242,12 +242,17 @@ contract WithdrawUnitTest is BaseUnitTest {
         stakedLPStrategy.deposit(depositAmount, alice);
         vm.stopPrank();
 
-        // Someone else donates tokens directly to the underlying ERC4626 vault
-        address donor = address(0xBEEF);
-        deal(address(mockERC20), donor, donationAmount);
-        vm.startPrank(donor);
-        mockERC20.transfer(address(mockERC4626), donationAmount);
-        vm.stopPrank();
+        {
+            uint256 rateBeforeDonation = stakedLPStrategy.convertToAssets(1e18);
+            // Someone else donates tokens directly to the underlying ERC4626 vault
+            address donor = address(0xBEEF);
+            deal(address(mockERC20), donor, donationAmount);
+            vm.startPrank(donor);
+            mockERC20.transfer(address(mockERC4626), donationAmount);
+            vm.stopPrank();
+
+            assertGt(stakedLPStrategy.convertToAssets(1e18), rateBeforeDonation, "Rate should increase after donation");
+        }
 
         // Alice tries to withdraw assets
         uint256 aliceSharesBefore = stakedLPStrategy.balanceOf(alice);
@@ -305,12 +310,17 @@ contract WithdrawUnitTest is BaseUnitTest {
         stakedLPStrategy.deposit(depositAmount, alice);
         vm.stopPrank();
 
-        // Someone donates tokens directly to the ERC4626 vault
-        address donor = address(0xCAFE);
-        deal(address(mockERC20), donor, donationAmount);
-        vm.startPrank(donor);
-        mockERC20.transfer(address(mockERC4626), donationAmount);
-        vm.stopPrank();
+        {
+            uint256 rateBeforeDonation = stakedLPStrategy.convertToAssets(1e18);
+            // Someone donates tokens directly to the ERC4626 vault
+            address donor = address(0xCAFE);
+            deal(address(mockERC20), donor, donationAmount);
+            vm.startPrank(donor);
+            mockERC20.transfer(address(mockERC4626), donationAmount);
+            vm.stopPrank();
+
+            assertGt(stakedLPStrategy.convertToAssets(1e18), rateBeforeDonation, "Rate should increase after donation");
+        }
 
         // Alice redeems shares
         uint256 assetsPerShare = stakedLPStrategy.convertToAssets(1e18);
