@@ -23,11 +23,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         uint256 lpBalance = deposit_lp(alice, depositAmount);
 
-        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+        assertEq(IERC20(underlyingAsset).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
 
         vm.startPrank(alice);
 
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
 
         uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
 
@@ -38,13 +38,13 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Bound withdrawShares between 0 and shares
         withdrawShares = bound(withdrawShares, 1, shares);
 
-        uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 preLpBalance = IERC20(underlyingAsset).balanceOf(alice);
         uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
 
         uint256 assetsWithdrawn = stakedLPStrategy.withdraw(withdrawShares, alice, alice);
 
         // LP tokens should increase by at least assetsWithdrawn
-        uint256 postLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 postLpBalance = IERC20(underlyingAsset).balanceOf(alice);
         assertEq(
             postLpBalance,
             preLpBalance + assetsWithdrawn,
@@ -76,11 +76,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         uint256 lpBalance = deposit_lp(alice, depositAmount);
 
-        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+        assertEq(IERC20(underlyingAsset).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
 
         vm.startPrank(alice);
 
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
 
         uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
 
@@ -90,13 +90,13 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         redeemAmount = bound(redeemAmount, 1, depositAmount);
 
-        uint256 preLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 preLpBalance = IERC20(underlyingAsset).balanceOf(alice);
         uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
 
         uint256 assetsRedeemed = stakedLPStrategy.redeem(shares, alice, alice);
 
         // LP tokens should increase by exactly assetsRedeemed
-        uint256 postLpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 postLpBalance = IERC20(underlyingAsset).balanceOf(alice);
         assertEq(
             postLpBalance, preLpBalance + assetsRedeemed, "LP token balance did not increase as expected after redeem"
         );
@@ -124,11 +124,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         uint256 lpBalance = deposit_lp(alice, depositAmount);
 
-        assertEq(IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
+        assertEq(IERC20(underlyingAsset).balanceOf(alice), lpBalance, "Alice's stakedao LP balance mismatch");
 
         vm.startPrank(alice);
 
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
 
         assertEq(IERC20(stakedLPStrategy).balanceOf(alice), shares, "Alice's strategy shares balance mismatch");
@@ -165,7 +165,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         vm.startPrank(alice);
 
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         uint256 shares = stakedLPStrategy.deposit(lpBalance, alice);
 
         assertEq(IERC20(stakedLPStrategy).balanceOf(alice), shares, "Alice's strategy shares balance mismatch");
@@ -205,16 +205,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Alice receives LP tokens and deposits them into the strategy
         uint256 aliceLp = deposit_lp(alice, depositAmount);
         vm.startPrank(alice);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), aliceLp);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), aliceLp);
         uint256 aliceShares = stakedLPStrategy.deposit(aliceLp, alice);
         vm.stopPrank();
 
         // Bob mints LP tokens, but DONATES them directly to the vault (does not call deposit)
         uint256 bobLp = deposit_lp(bob, depositAmount);
         // Send LP directly to the strategy, increasing totalAssets but not shares
-        deal(MC.CURVE_ynRWAx_USDC_LP, bob, bobLp);
+        deal(underlyingAsset, bob, bobLp);
         vm.startPrank(bob);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).transfer(address(stakedLPStrategy), bobLp);
+        IERC20(underlyingAsset).transfer(address(stakedLPStrategy), bobLp);
         vm.stopPrank();
 
         // At this point alice has all the shares, but the vault has double the assets
@@ -226,7 +226,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         vm.startPrank(alice);
         uint256 aliceInitialShares = stakedLPStrategy.balanceOf(alice);
 
-        uint256 aliceLpBalanceBefore = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 aliceLpBalanceBefore = IERC20(underlyingAsset).balanceOf(alice);
 
         // previewRedeem: how many LP tokens should Alice receive for redeeming all her shares?
         uint256 previewAssets = stakedLPStrategy.previewRedeem(aliceInitialShares);
@@ -237,7 +237,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(stakedLPStrategy.balanceOf(alice), 0, "Alice should have 0 shares after redeeming all");
 
         // Alice gets more than her original deposit, due to Bob's donation
-        uint256 aliceLpBalanceAfter = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 aliceLpBalanceAfter = IERC20(underlyingAsset).balanceOf(alice);
         assertGt(aliceLpBalanceAfter - aliceLpBalanceBefore, aliceLp, "Alice profit includes Bob's donation");
 
         // The strategy vault should now have only Bob's donation (since Alice withdrew her share)
@@ -258,16 +258,16 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Alice receives LP tokens and deposits them into the strategy
         uint256 aliceLp = deposit_lp(alice, depositAmount);
         vm.startPrank(alice);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), aliceLp);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), aliceLp);
         uint256 aliceShares = stakedLPStrategy.deposit(aliceLp, alice);
         vm.stopPrank();
 
         // Bob mints LP tokens, but DONATES them directly to the vault (does not call deposit)
         uint256 bobLp = deposit_lp(bob, depositAmount);
         // Send LP directly to the strategy, increasing totalAssets but not shares
-        deal(MC.CURVE_ynRWAx_USDC_LP, bob, bobLp);
+        deal(underlyingAsset, bob, bobLp);
         vm.startPrank(bob);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).transfer(address(stakedLPStrategy), bobLp);
+        IERC20(underlyingAsset).transfer(address(stakedLPStrategy), bobLp);
         vm.stopPrank();
 
         // At this point alice has all the shares, but the vault has double the assets
@@ -279,7 +279,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         vm.startPrank(alice);
         uint256 aliceInitialShares = stakedLPStrategy.balanceOf(alice);
 
-        uint256 aliceLpBalanceBefore = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 aliceLpBalanceBefore = IERC20(underlyingAsset).balanceOf(alice);
 
         // previewRedeem: how many LP tokens should Alice receive for redeeming all her shares?
         uint256 previewAssets = stakedLPStrategy.previewRedeem(aliceInitialShares);
@@ -290,7 +290,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(stakedLPStrategy.balanceOf(alice), 0, "Alice should have 0 shares after redeeming all");
 
         // Alice gets more than her original deposit, due to Bob's donation
-        uint256 aliceLpBalanceAfter = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        uint256 aliceLpBalanceAfter = IERC20(underlyingAsset).balanceOf(alice);
         assertGt(aliceLpBalanceAfter - aliceLpBalanceBefore, aliceLp, "Alice profit includes Bob's donation");
 
         // The strategy vault should now have only Bob's donation (since Alice withdrew her share)
@@ -312,7 +312,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 aliceLp = deposit_lp(alice, depositAmount);
 
         vm.startPrank(alice);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), aliceLp);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), aliceLp);
         uint256 aliceShares = stakedLPStrategy.deposit(aliceLp, alice);
         vm.stopPrank();
 
@@ -320,7 +320,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         deal(MC.USDC, bob, donationAmount);
         uint256 bobLp = deposit_lp(bob, donationAmount);
         vm.startPrank(bob);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).transfer(address(stakedLPStrategy), bobLp);
+        IERC20(underlyingAsset).transfer(address(stakedLPStrategy), bobLp);
         vm.stopPrank();
 
         // Record state after donation
@@ -332,7 +332,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         uint256 charlieLp = deposit_lp(charlie, depositAmount);
 
         vm.startPrank(charlie);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), charlieLp);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), charlieLp);
 
         // Record previewShares for Charlie
         uint256 charliePreviewShares = stakedLPStrategy.previewDeposit(charlieLp);
