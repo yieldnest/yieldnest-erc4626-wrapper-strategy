@@ -20,6 +20,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
     StrategyAdapter public strategyAdapter;
 
     address underlyingAsset;
+    address targetVault;
 
     address public ADMIN = makeAddr("admin");
 
@@ -27,13 +28,14 @@ contract BaseIntegrationTest is Test, AssertUtils {
         deployment = new DeployStrategy();
 
         underlyingAsset = MC.CURVE_ynRWAx_USDC_LP;
+        targetVault = MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT;
 
         deployment.setDeploymentParameters(
             BaseScript.DeploymentParameters({
                 name: "Staked LP Strategy ynRWAx-USDC",
                 symbol_: "sLP-ynRWAx-USDC",
                 decimals: 18,
-                targetVault: MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT,
+                targetVault: targetVault,
                 countNativeAsset: false
             })
         );

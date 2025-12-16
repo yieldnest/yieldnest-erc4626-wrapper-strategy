@@ -23,13 +23,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
 
-        IERC20(underlyingAsset).approve(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT, lpBalance);
+        IERC20(underlyingAsset).approve(targetVault, lpBalance);
 
-        IERC4626(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).deposit(lpBalance, alice);
+        IERC4626(targetVault).deposit(lpBalance, alice);
 
-        assertEq(
-            IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(alice), lpBalance, "Vault share balance mismatch"
-        );
+        assertEq(IERC20(targetVault).balanceOf(alice), lpBalance, "Vault share balance mismatch");
 
         vm.stopPrank();
     }
@@ -99,9 +97,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(stakedLPStrategy.totalSupply(), lpBalance, "Alice's stakedao gauge total supply mismatch");
 
         assertEq(
-            IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy)),
-            lpBalance,
-            "Vault balance of stakedao LP mismatch"
+            IERC20(targetVault).balanceOf(address(stakedLPStrategy)), lpBalance, "Vault balance of stakedao LP mismatch"
         );
     }
 

@@ -39,7 +39,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         withdrawShares = bound(withdrawShares, 1, shares);
 
         uint256 preLpBalance = IERC20(underlyingAsset).balanceOf(alice);
-        uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
+        uint256 preStakeDaoBalance = IERC20(targetVault).balanceOf(address(stakedLPStrategy));
 
         uint256 assetsWithdrawn = stakedLPStrategy.withdraw(withdrawShares, alice, alice);
 
@@ -56,7 +56,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(aliceBalanceAfter, shares - withdrawShares, "Share balance did not decrease by withdrawn shares");
 
         // Assert the StakeDao gauge LP balance in the vault decreased by assetsWithdrawn
-        uint256 postStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
+        uint256 postStakeDaoBalance = IERC20(targetVault).balanceOf(address(stakedLPStrategy));
         assertEq(
             postStakeDaoBalance,
             preStakeDaoBalance - assetsWithdrawn,
@@ -91,7 +91,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         redeemAmount = bound(redeemAmount, 1, depositAmount);
 
         uint256 preLpBalance = IERC20(underlyingAsset).balanceOf(alice);
-        uint256 preStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
+        uint256 preStakeDaoBalance = IERC20(targetVault).balanceOf(address(stakedLPStrategy));
 
         uint256 assetsRedeemed = stakedLPStrategy.redeem(shares, alice, alice);
 
@@ -106,7 +106,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         assertEq(aliceBalanceAfter, 0, "Share balance should be zero after redeem");
 
         // Assert the StakeDao gauge LP balance in the vault decreased by assetsRedeemed
-        uint256 postStakeDaoBalance = IERC20(MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT).balanceOf(address(stakedLPStrategy));
+        uint256 postStakeDaoBalance = IERC20(targetVault).balanceOf(address(stakedLPStrategy));
         assertEq(
             postStakeDaoBalance,
             preStakeDaoBalance - assetsRedeemed,

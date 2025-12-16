@@ -47,7 +47,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         address[] memory assets = stakedLPStrategy.getAssets();
         assertEq(assets.length, 2, "Strategy should have 2 assets registered");
         assertEq(assets[0], underlyingAsset, "First asset should be underlyingAsset");
-        assertEq(assets[1], MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT, "Second asset should be StakeDaoGauge");
+        assertEq(assets[1], targetVault, "Second asset should be StakeDaoGauge");
     }
 
     function test_previewDeposit() public {
