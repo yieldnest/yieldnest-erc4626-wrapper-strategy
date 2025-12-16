@@ -93,8 +93,6 @@ contract StrategyDeployer {
                                 decimals_: decimals,
                                 alwaysComputeTotalAssets_: true, // for fee collection
                                 defaultAssetIndex_: 0,
-                                vault_: targetVault,
-                                provider_: address(rateProvider),
                                 countNativeAsset_: countNativeAsset
                             })
                         )
@@ -109,6 +107,19 @@ contract StrategyDeployer {
     function configureStrategy() internal virtual {
         BaseRoles.configureDefaultRolesStrategy(strategy, address(timelock), actors);
         BaseRoles.configureTemporaryRolesStrategy(strategy, deployer);
+
+        {
+            // Configure assets and provider
+
+            address underlyingAsset = IERC4626(targetVault).asset();
+
+            // depositable and withdrawable
+            strategy.addAsset(underlyingAsset, 18, true, true);
+            // not depositable and not withdrawable
+            strategy.addAsset(targetVault, false, false);
+
+            strategy.setProvider(address(rateProvider));
+        }
 
         ERC4626WrapperHooks hooks = new ERC4626WrapperHooks(address(strategy), targetVault);
         strategy.setHooks(address(hooks));

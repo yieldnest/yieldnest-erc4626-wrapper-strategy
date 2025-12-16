@@ -33,6 +33,8 @@ contract BaseUnitTest is Test, AssertUtils {
             new TransparentUpgradeableProxy(address(new ERC4626WrapperStrategy()), ADMIN, "");
         stakedLPStrategy = ERC4626WrapperStrategy(payable(address(proxy)));
 
+        address provider = address(new Provider(address(mockERC4626)));
+
         ERC4626WrapperStrategy.InitParams memory params = ERC4626WrapperStrategy.InitParams({
             admin: ADMIN,
             name: "Mock Vault Wrapper",
@@ -40,8 +42,6 @@ contract BaseUnitTest is Test, AssertUtils {
             decimals_: 18,
             alwaysComputeTotalAssets_: true,
             defaultAssetIndex_: 0,
-            vault_: address(mockERC4626),
-            provider_: address(new Provider(address(mockERC4626))),
             countNativeAsset_: false
         });
         stakedLPStrategy.initialize(params);
@@ -58,6 +58,20 @@ contract BaseUnitTest is Test, AssertUtils {
         stakedLPStrategy.grantRole(stakedLPStrategy.HOOKS_MANAGER_ROLE(), ADMIN);
         stakedLPStrategy.grantRole(stakedLPStrategy.FEE_MANAGER_ROLE(), ADMIN);
         vm.stopPrank();
+
+        {
+            // Configure assets and provider
+            address underlyingAsset = IERC4626(mockERC4626).asset();
+
+            vm.startPrank(ADMIN);
+            // depositable and withdrawable
+            stakedLPStrategy.addAsset(underlyingAsset, 18, true, true);
+            // not depositable and not withdrawable
+            stakedLPStrategy.addAsset(address(mockERC4626), false, false);
+
+            stakedLPStrategy.setProvider(address(provider));
+            vm.stopPrank();
+        }
 
         vm.startPrank(ADMIN);
         stakedLPStrategy.unpause();

@@ -20,8 +20,6 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
         uint8 decimals_;
         bool alwaysComputeTotalAssets_;
         uint256 defaultAssetIndex_;
-        address vault_;
-        address provider_;
         bool countNativeAsset_;
     }
 
@@ -40,14 +38,6 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
             params.alwaysComputeTotalAssets_,
             params.defaultAssetIndex_
         );
-
-        address underlyingAsset = IERC4626(params.vault_).asset();
-
-        _addAsset(underlyingAsset, 18, true);
-        _setAssetWithdrawable(underlyingAsset, true);
-        _addAsset(params.vault_, 18, false);
-
-        VaultLib.setProvider(params.provider_);
     }
 
     //// FEES ////
@@ -111,9 +101,15 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
     function _availableAssets(address asset_) internal view virtual override returns (uint256 availableAssets) {
         address[] memory assets = getAssets();
         if (asset_ == assets[0]) {
-            IERC4626 vault = IERC4626(assets[1]);
-            availableAssets =
-                IERC20(asset_).balanceOf(address(this)) + vault.convertToAssets(vault.balanceOf(address(this)));
+            availableAssets = IERC20(asset_).balanceOf(address(this));
+            if (assets.length > 1) {
+                IERC4626 vault = IERC4626(assets[1]);
+                // in case the second asset is available and configured is the same as
+                // the base asset, we add the balance of the vault to the available assets
+                if (vault.asset() == asset_) {
+                    availableAssets += vault.convertToAssets(vault.balanceOf(address(this)));
+                }
+            }
         } else {
             availableAssets = super._availableAssets(asset_);
         }
