@@ -19,10 +19,14 @@ contract BaseIntegrationTest is Test, AssertUtils {
     DeployStrategy public deployment;
     StrategyAdapter public strategyAdapter;
 
+    address underlyingAsset;
+
     address public ADMIN = makeAddr("admin");
 
     function setUp() public virtual {
         deployment = new DeployStrategy();
+
+        underlyingAsset = MC.CURVE_ynRWAx_USDC_LP;
 
         deployment.setDeploymentParameters(
             BaseScript.DeploymentParameters({
@@ -54,7 +58,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
 
         // Addresses required
         address usdc = MC.USDC;
-        address curveLp = MC.CURVE_ynRWAx_USDC_LP;
+        address curveLp = underlyingAsset;
 
         // Use YNRWAX constant directly
         address ynrwax = MC.YNRWAX;

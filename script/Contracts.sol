@@ -14,6 +14,8 @@ library MainnetContracts {
 
     address public constant CURVE_ynRWAx_USDC_LP = 0xf05Bc5C38a8F5E3D98c72f11bC59E713F8a32228;
 
+    address public constant CURVE_ynRWAx_ynUSDx_LP = 0xFFd3b4D343A8964a5C3c1caAc20f319C41A97BFF;
+
     address public constant STAKEDAO_CURVE_ynRWAx_USDC_VAULT = 0xf051b0d91A79b296234a6906500DC147Ed0E3213;
 
     address public constant CURVE_STABLE_SWAP_FACTORY_NG = 0x6A8cbed756804B16E05E741eDaBd5cB544AE21bf;

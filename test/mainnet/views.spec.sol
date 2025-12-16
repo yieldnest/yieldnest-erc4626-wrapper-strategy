@@ -16,7 +16,7 @@ contract VaultViewsTest is BaseIntegrationTest {
     function test_erc4626_basic_views() public {
         // Use the actual vault/strategy contract, not the adapter
         address asset = stakedLPStrategy.asset();
-        assertEq(asset, MC.CURVE_ynRWAx_USDC_LP, "Vault underlying asset should be CURVE LP token");
+        assertEq(asset, underlyingAsset, "Vault underlying asset should be Curve LP token");
 
         uint8 decimals = stakedLPStrategy.decimals();
         assertEq(decimals, 18, "Vault decimals should be 18");
@@ -46,7 +46,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         // Get the assets array and assert its contents and length
         address[] memory assets = stakedLPStrategy.getAssets();
         assertEq(assets.length, 2, "Strategy should have 2 assets registered");
-        assertEq(assets[0], MC.CURVE_ynRWAx_USDC_LP, "First asset should be CURVE_ynRWAx_USDC_LP");
+        assertEq(assets[0], underlyingAsset, "First asset should be underlyingAsset");
         assertEq(assets[1], MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT, "Second asset should be StakeDaoGauge");
     }
 
@@ -75,13 +75,13 @@ contract VaultViewsTest is BaseIntegrationTest {
         deal(MC.USDC, alice, depositAmount);
         // Mint Curve LP by depositing USDC, then deposit that LP into the strategy.
         vm.startPrank(alice);
-        IERC20(MC.USDC).approve(address(MC.CURVE_ynRWAx_USDC_LP), depositAmount);
+        IERC20(MC.USDC).approve(address(underlyingAsset), depositAmount);
         uint256[] memory amounts = new uint256[](2);
         amounts[1] = depositAmount;
-        ICurvePool(MC.CURVE_ynRWAx_USDC_LP).add_liquidity(amounts, 0);
-        uint256 lpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        ICurvePool(underlyingAsset).add_liquidity(amounts, 0);
+        uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
 
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         stakedLPStrategy.deposit(lpBalance, alice);
         vm.stopPrank();
 
@@ -99,14 +99,14 @@ contract VaultViewsTest is BaseIntegrationTest {
 
         // Mint Curve LP by depositing USDC, then deposit that LP into the strategy.
         vm.startPrank(alice);
-        IERC20(MC.USDC).approve(address(MC.CURVE_ynRWAx_USDC_LP), depositAmount);
+        IERC20(MC.USDC).approve(address(underlyingAsset), depositAmount);
         // Add liquidity with USDC to get LP tokens (USDC is index 1)
         uint256[] memory amounts = new uint256[](2);
         amounts[1] = depositAmount;
-        ICurvePool(MC.CURVE_ynRWAx_USDC_LP).add_liquidity(amounts, 0);
-        uint256 lpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
+        ICurvePool(underlyingAsset).add_liquidity(amounts, 0);
+        uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
 
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         stakedLPStrategy.deposit(lpBalance, alice);
         vm.stopPrank();
 
@@ -122,12 +122,12 @@ contract VaultViewsTest is BaseIntegrationTest {
         deal(MC.USDC, alice, depositAmount);
 
         vm.startPrank(alice);
-        IERC20(MC.USDC).approve(address(MC.CURVE_ynRWAx_USDC_LP), depositAmount);
+        IERC20(MC.USDC).approve(address(underlyingAsset), depositAmount);
         uint256[] memory amounts = new uint256[](2);
         amounts[1] = depositAmount;
-        ICurvePool(MC.CURVE_ynRWAx_USDC_LP).add_liquidity(amounts, 0);
-        uint256 lpBalance = IERC20(MC.CURVE_ynRWAx_USDC_LP).balanceOf(alice);
-        IERC20(MC.CURVE_ynRWAx_USDC_LP).approve(address(stakedLPStrategy), lpBalance);
+        ICurvePool(underlyingAsset).add_liquidity(amounts, 0);
+        uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         stakedLPStrategy.deposit(lpBalance, alice);
         vm.stopPrank();
 
@@ -162,8 +162,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         uint256 redeemableAmount = strategyAdapter.previewWithdrawSingleSided(withdrawLpAmount);
 
         // Preview withdrawal from Curve
-        uint256 expectedRedeemableAmount =
-            ICurvePool(MC.CURVE_ynRWAx_USDC_LP).calc_withdraw_one_coin(withdrawLpAmount, 1);
+        uint256 expectedRedeemableAmount = ICurvePool(underlyingAsset).calc_withdraw_one_coin(withdrawLpAmount, 1);
 
         assertEq(redeemableAmount, expectedRedeemableAmount, "Redeemable amount mismatch");
     }
