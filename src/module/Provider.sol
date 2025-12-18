@@ -8,17 +8,19 @@ contract Provider {
 
     address public immutable vault;
     address public immutable underlyingAsset;
+    uint256 public immutable unitValue;
 
-    constructor(address vault_) {
+    constructor(address vault_, uint256 unitValue_) {
         vault = vault_;
         underlyingAsset = IERC4626(vault).asset();
+        unitValue = unitValue_;
     }
 
     function getRate(address asset) external view returns (uint256) {
         if (asset == underlyingAsset) {
-            return 1e18;
+            return unitValue;
         } else if (asset == vault) {
-            return IERC4626(vault).convertToAssets(1e18);
+            return IERC4626(vault).convertToAssets(unitValue);
         } else {
             revert UnsupportedAsset(asset);
         }

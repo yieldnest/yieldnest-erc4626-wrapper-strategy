@@ -33,7 +33,7 @@ contract BaseUnitTest is Test, AssertUtils {
             new TransparentUpgradeableProxy(address(new ERC4626WrapperStrategy()), ADMIN, "");
         stakedLPStrategy = ERC4626WrapperStrategy(payable(address(proxy)));
 
-        address provider = address(new Provider(address(mockERC4626)));
+        address provider = address(new Provider(address(mockERC4626), 10 ** 18));
 
         ERC4626WrapperStrategy.InitParams memory params = ERC4626WrapperStrategy.InitParams({
             admin: ADMIN,

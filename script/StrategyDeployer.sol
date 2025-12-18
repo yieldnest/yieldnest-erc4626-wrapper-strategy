@@ -13,6 +13,7 @@ import {ERC4626WrapperHooks} from "src/hooks/ERC4626WrapperHooks.sol";
 import {SafeRules} from "lib/yieldnest-vault/script/rules/SafeRules.sol";
 import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
+import {IERC20Metadata} from "lib/yieldnest-vault/src/Common.sol";
 
 contract StrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -114,7 +115,7 @@ contract StrategyDeployer {
             address underlyingAsset = IERC4626(targetVault).asset();
 
             // depositable and withdrawable
-            strategy.addAsset(underlyingAsset, 18, true, true);
+            strategy.addAsset(underlyingAsset, IERC20Metadata(underlyingAsset).decimals(), true, true);
             // not depositable and not withdrawable
             strategy.addAsset(targetVault, false, false);
 
@@ -143,6 +144,7 @@ contract StrategyDeployer {
     }
 
     function deployRateProvider() internal {
-        rateProvider = IProvider(address(new Provider(targetVault)));
+        // the unit value is 10 ** decimals;
+        rateProvider = IProvider(address(new Provider(targetVault, 10 ** decimals)));
     }
 }
