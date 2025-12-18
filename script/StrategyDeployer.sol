@@ -14,6 +14,7 @@ import {SafeRules} from "lib/yieldnest-vault/script/rules/SafeRules.sol";
 import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20Metadata} from "lib/yieldnest-vault/src/Common.sol";
+import {SingleAssetProvider} from "src/module/SingleAssetProvider.sol";
 
 contract StrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -113,7 +114,7 @@ contract StrategyDeployer {
         BaseRoles.configureTemporaryRolesStrategy(strategy, deployer);
 
         address underlyingAsset;
-        if (targetVault == address(0)) {
+        if (!targetVaultIsSet()) {
             underlyingAsset = baseAsset;
         } else {
             underlyingAsset = IERC4626(targetVault).asset();
@@ -126,7 +127,7 @@ contract StrategyDeployer {
             // depositable and withdrawable
             strategy.addAsset(underlyingAsset, IERC20Metadata(underlyingAsset).decimals(), true, true);
             // not depositable and not withdrawable
-            if (targetVault != address(0)) {
+            if (targetVaultIsSet()) {
                 strategy.addAsset(targetVault, false, false);
             }
 
@@ -138,7 +139,7 @@ contract StrategyDeployer {
 
         strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
 
-        if (targetVault != address(0)) {
+        if (targetVaultIsSet()) {
             SafeRules.RuleParams[] memory rules = new SafeRules.RuleParams[](3);
             rules[0] = BaseRules.getDepositRule(targetVault, address(strategy));
             rules[1] = BaseRules.getWithdrawRule(targetVault, address(strategy));
@@ -153,8 +154,15 @@ contract StrategyDeployer {
         BaseRoles.renounceTemporaryRolesStrategy(strategy, deployer);
     }
 
+    function targetVaultIsSet() internal view returns (bool) {
+        return targetVault != address(0);
+    }
+
     function deployRateProvider() internal {
-        // the unit value is 10 ** decimals;
-        rateProvider = IProvider(address(new Provider(targetVault, 10 ** decimals)));
+        if (targetVaultIsSet()) {
+            rateProvider = IProvider(address(new Provider(targetVault, 10 ** decimals)));
+        } else {
+            rateProvider = IProvider(address(new SingleAssetProvider(baseAsset, 10 ** decimals)));
+        }
     }
 }

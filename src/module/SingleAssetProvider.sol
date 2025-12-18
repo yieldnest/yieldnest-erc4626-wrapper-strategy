@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 
-contract Provider {
+contract SingleAssetProvider {
     error UnsupportedAsset(address asset);
 
     address public immutable underlyingAsset;
