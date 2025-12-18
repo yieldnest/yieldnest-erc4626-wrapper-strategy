@@ -24,6 +24,7 @@ contract StrategyDeployer {
         string symbol;
         uint8 decimals;
         IActors actors;
+        address baseAsset;
         address targetVault;
         bool countNativeAsset;
         Implementations implementations;
@@ -45,6 +46,7 @@ contract StrategyDeployer {
     TimelockController public timelock;
     IActors public actors;
     Implementations public implementations;
+    address public baseAsset;
     address public targetVault;
     address public curvePool;
 
@@ -59,6 +61,7 @@ contract StrategyDeployer {
         name = params.name;
         symbol_ = params.symbol;
         decimals = params.decimals;
+        baseAsset = params.baseAsset;
         targetVault = params.targetVault;
         countNativeAsset = params.countNativeAsset;
         implementations = params.implementations;
@@ -109,15 +112,23 @@ contract StrategyDeployer {
         BaseRoles.configureDefaultRolesStrategy(strategy, address(timelock), actors);
         BaseRoles.configureTemporaryRolesStrategy(strategy, deployer);
 
+        address underlyingAsset;
+        if (targetVault == address(0)) {
+            underlyingAsset = baseAsset;
+        } else {
+            underlyingAsset = IERC4626(targetVault).asset();
+            if (underlyingAsset != baseAsset) {
+                revert InvalidDeploymentParams("baseAsset is not the underlying asset of the targetVault");
+            }
+        }
+
         {
-            // Configure assets and provider
-
-            address underlyingAsset = IERC4626(targetVault).asset();
-
             // depositable and withdrawable
             strategy.addAsset(underlyingAsset, IERC20Metadata(underlyingAsset).decimals(), true, true);
             // not depositable and not withdrawable
-            strategy.addAsset(targetVault, false, false);
+            if (targetVault != address(0)) {
+                strategy.addAsset(targetVault, false, false);
+            }
 
             strategy.setProvider(address(rateProvider));
         }
@@ -127,8 +138,7 @@ contract StrategyDeployer {
 
         strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
 
-        {
-            address underlyingAsset = IERC4626(targetVault).asset();
+        if (targetVault != address(0)) {
             SafeRules.RuleParams[] memory rules = new SafeRules.RuleParams[](3);
             rules[0] = BaseRules.getDepositRule(targetVault, address(strategy));
             rules[1] = BaseRules.getWithdrawRule(targetVault, address(strategy));

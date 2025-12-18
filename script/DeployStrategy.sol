@@ -39,6 +39,7 @@ contract DeployStrategy is BaseScript {
                 symbol: symbol_,
                 decimals: decimals,
                 actors: actors,
+                baseAsset: baseAsset,
                 targetVault: targetVault,
                 countNativeAsset: countNativeAsset,
                 implementations: implementations
@@ -83,7 +84,15 @@ contract DeployStrategy is BaseScript {
         if (decimals == 0) {
             revert("Not pre-configured");
         }
-        baseAsset = IERC4626(targetVault).asset();
+        if (!skipTargetVault) {
+            if (baseAsset != IERC4626(targetVault).asset()) {
+                revert InvalidDeploymentParams("baseAsset is not the underlying asset of the targetVault");
+            }
+        } else {
+            if (baseAsset == address(0)) {
+                revert InvalidDeploymentParams("baseAsset is not set");
+            }
+        }
     }
 
     function _verifyDeploymentParams() internal view virtual {

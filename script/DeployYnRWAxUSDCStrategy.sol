@@ -8,7 +8,9 @@ contract DeployYnRWAxUSDCStrategy is DeployStrategy {
                 name: "Staked LP Strategy ynRWAx-USDC",
                 symbol_: "sLP-ynRWAx-USDC",
                 decimals: 18,
+                baseAsset: MC.CURVE_ynRWAx_USDC_LP,
                 targetVault: MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT,
+                skipTargetVault: false,
                 countNativeAsset: false
             })
         );

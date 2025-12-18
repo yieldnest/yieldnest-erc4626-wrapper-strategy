@@ -23,8 +23,10 @@ abstract contract BaseScript is Script {
         string name;
         string symbol_;
         uint8 decimals;
+        address baseAsset;
         address targetVault;
         bool countNativeAsset;
+        bool skipTargetVault;
     }
 
     function setDeploymentParameters(DeploymentParameters memory params) public virtual {
@@ -33,6 +35,8 @@ abstract contract BaseScript is Script {
         decimals = params.decimals;
         targetVault = params.targetVault;
         countNativeAsset = params.countNativeAsset;
+        baseAsset = params.baseAsset;
+        skipTargetVault = params.skipTargetVault;
     }
 
     Env public deploymentEnv = Env.PROD;
@@ -43,6 +47,7 @@ abstract contract BaseScript is Script {
     address public targetVault;
     bool public countNativeAsset;
     address public baseAsset;
+    bool public skipTargetVault;
 
     uint256 public minDelay;
     IActors public actors;

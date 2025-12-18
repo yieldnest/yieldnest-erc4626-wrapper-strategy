@@ -35,8 +35,10 @@ contract BaseIntegrationTest is Test, AssertUtils {
                 name: "Staked LP Strategy ynRWAx-USDC",
                 symbol_: "sLP-ynRWAx-USDC",
                 decimals: 18,
+                baseAsset: underlyingAsset,
                 targetVault: targetVault,
-                countNativeAsset: false
+                countNativeAsset: false,
+                skipTargetVault: false
             })
         );
         deployment.setEnv(BaseScript.Env.TEST);
