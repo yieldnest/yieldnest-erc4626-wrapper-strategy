@@ -7,6 +7,7 @@ import {VaultLib} from "lib/yieldnest-vault/src/library/VaultLib.sol";
 import {FeeMath} from "lib/yieldnest-vault/src/module/FeeMath.sol";
 import {LinearWithdrawalFee} from "lib/yieldnest-vault/src/module/LinearWithdrawalFee.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
+import {ERC4626WrapperLib} from "src/lib/ERC4626WrapperLib.sol";
 
 contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
     string public constant ERC4626_WRAPPER_STRATEGY_VERSION = "0.1.0";
@@ -64,7 +65,7 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
         return __feeOnTotal(amount, user);
     }
 
-    //// FEES ADMIN ////
+    // //// FEES ADMIN ////
 
     /**
      * @notice Sets the base withdrawal fee for the vault
@@ -99,17 +100,8 @@ contract ERC4626WrapperStrategy is BaseStrategy, LinearWithdrawalFee {
      * @return availableAssets The available assets.
      */
     function _availableAssets(address asset_) internal view virtual override returns (uint256 availableAssets) {
-        address[] memory assets = getAssets();
-        if (asset_ == assets[0]) {
-            availableAssets = IERC20(asset_).balanceOf(address(this));
-            if (assets.length > 1) {
-                IERC4626 vault = IERC4626(assets[1]);
-                // in case the second asset is available and configured is the same as
-                // the base asset, we add the balance of the vault to the available assets
-                if (vault.asset() == asset_) {
-                    availableAssets += vault.convertToAssets(vault.balanceOf(address(this)));
-                }
-            }
+        if (asset_ == asset()) {
+            availableAssets = ERC4626WrapperLib.availableAssets(this, asset_);
         } else {
             availableAssets = super._availableAssets(asset_);
         }
