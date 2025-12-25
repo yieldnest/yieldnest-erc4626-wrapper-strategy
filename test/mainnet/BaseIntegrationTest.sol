@@ -27,13 +27,13 @@ contract BaseIntegrationTest is Test, AssertUtils {
     function setUp() public virtual {
         deployment = new DeployStrategy();
 
-        underlyingAsset = MC.CURVE_ynRWAx_USDC_LP;
-        targetVault = MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT;
+        underlyingAsset = MC.CURVE_ynRWAx_ynUSDx_LP;
+        targetVault = MC.STAKEDAO_CURVE_ynRWAx_ynUSDx_VAULT;
 
         deployment.setDeploymentParameters(
             BaseScript.DeploymentParameters({
-                name: "Staked LP Strategy ynRWAx-USDC",
-                symbol_: "sLP-ynRWAx-USDC",
+                name: "Staked LP Strategy ynRWAx-ynUSDx",
+                symbol_: "sLP-ynRWAx-ynUSDx",
                 decimals: 18,
                 baseAsset: underlyingAsset,
                 targetVault: targetVault,
@@ -57,38 +57,44 @@ contract BaseIntegrationTest is Test, AssertUtils {
         uint256 aliceAmount = depositAmount;
         deal(MC.USDC, alice, aliceAmount);
 
-        // Half of alice's USDC to deposit into YNRWAX
+        // Split the depositAmount into two equal parts for YNRWAX and ynUSDx (50/50 for simplicity)
         uint256 halfAmount = aliceAmount / 2;
 
         // Addresses required
         address usdc = MC.USDC;
         address curveLp = underlyingAsset;
 
-        // Use YNRWAX constant directly
+        // Use constants directly
         address ynrwax = MC.YNRWAX;
+        address ynusdx = MC.YNUSDX;
 
-        // Prank as alice for interacting from her address
         vm.startPrank(alice);
 
-        // Approve YNRWAX contract to spend USDC, then deposit half to YNRWAX
+        // Approve and deposit half USDC into YNRWAX for Alice
         IERC20(usdc).approve(ynrwax, halfAmount);
-
         IERC4626(ynrwax).deposit(halfAmount, alice);
 
-        // Interface for YNRWAX should have a deposit or mint method
-        // For the purpose of modelling, let's assume it's: function deposit(uint256 amount) public returns (uint256);
-        // (You may need to adapt this call based on actual YNR
+        // Approve and deposit half USDC into ynUSDx for Alice
+        IERC20(usdc).approve(ynusdx, halfAmount);
+        IERC4626(ynusdx).deposit(halfAmount, alice);
 
-        // Approve LP pool to spend USDC and YNRWAX for adding liquidity
-        IERC20(usdc).approve(curveLp, halfAmount);
-        IERC20(ynrwax).approve(curveLp, halfAmount); // or actual balance of YNRWAX minted
+        // Get resulting token balances
+        uint256 ynrwaxBal = IERC20(ynrwax).balanceOf(alice);
+        uint256 ynusdxBal = IERC20(ynusdx).balanceOf(alice);
 
-        // Add both tokens as liquidity to the LP (assuming it's a 2-coin pool [YNRWAX, USDC] and add_liquidity signature)
+        // Approve LP to spend tokens
+        IERC20(ynrwax).approve(curveLp, ynrwaxBal);
+        IERC20(ynusdx).approve(curveLp, ynusdxBal);
+
+        // Add as liquidity to the 2-coin pool [ynRWAx, ynUSDx]
         uint256[] memory amounts = new uint256[](2);
-        amounts[0] = halfAmount;
-        amounts[1] = halfAmount;
-        return ICurvePool(curveLp).add_liquidity(amounts, 0);
+        amounts[0] = ynrwaxBal; // ynRWAx balance
+        amounts[1] = ynusdxBal; // ynUSDx balance
+
+        uint256 lpTokens = ICurvePool(curveLp).add_liquidity(amounts, 0);
 
         vm.stopPrank();
+
+        return lpTokens;
     }
 }

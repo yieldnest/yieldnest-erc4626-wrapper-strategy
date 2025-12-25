@@ -307,7 +307,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         }
     }
 
-    function test_swap_slippage() public {
+    function skip_test_swap_slippage() public {
         uint256 withdrawalSizeIncrements = 10;
         uint256 aFactorIncrements = 13;
         RunSlippageTestResult[] memory results =

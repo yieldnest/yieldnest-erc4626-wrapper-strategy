@@ -22,10 +22,12 @@ contract VaultViewsTest is BaseIntegrationTest {
         assertEq(decimals, 18, "Vault decimals should be 18");
 
         string memory name = stakedLPStrategy.name();
-        assertEq(name, "Staked LP Strategy ynRWAx-USDC", "Vault name should match the expected name exactly");
+        // Fix to reflect actual name based on DeployStrategy config (see BaseIntegrationTest)
+        assertEq(name, "Staked LP Strategy ynRWAx-ynUSDx", "Vault name should match the expected name exactly");
 
         string memory symbol = stakedLPStrategy.symbol();
-        assertEq(symbol, "sLP-ynRWAx-USDC", "Vault symbol should match the expected symbol exactly");
+        // Fix to reflect actual symbol based on DeployStrategy config (see BaseIntegrationTest)
+        assertEq(symbol, "sLP-ynRWAx-ynUSDx", "Vault symbol should match the expected symbol exactly");
 
         uint256 totalAssets = stakedLPStrategy.totalAssets();
         assertEq(totalAssets, 0, "Initial totalAssets should be 0");
@@ -35,7 +37,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         assertEq(maxDeposit, type(uint256).max, "maxDeposit should be max");
 
         uint256 maxMint = stakedLPStrategy.maxMint(alice);
-        assertEq(maxMint, type(uint256).max, "maxMint should be >0");
+        assertEq(maxMint, type(uint256).max, "maxMint should be max");
 
         uint256 maxWithdraw = stakedLPStrategy.maxWithdraw(alice);
         uint256 maxRedeem = stakedLPStrategy.maxRedeem(alice);
@@ -47,7 +49,7 @@ contract VaultViewsTest is BaseIntegrationTest {
         address[] memory assets = stakedLPStrategy.getAssets();
         assertEq(assets.length, 2, "Strategy should have 2 assets registered");
         assertEq(assets[0], underlyingAsset, "First asset should be underlyingAsset");
-        assertEq(assets[1], targetVault, "Second asset should be StakeDaoGauge");
+        assertEq(assets[1], targetVault, "Second asset should be targetVault");
     }
 
     function test_previewDeposit() public {
@@ -69,20 +71,15 @@ contract VaultViewsTest is BaseIntegrationTest {
     }
 
     function test_previewWithdraw() public {
-        // Make sure the vault is not empty to allow for previews
+        // Use realistic LP deposit workflow from the shared helper to ensure proper minting of LP tokens
         address alice = makeAddr("alice");
         uint256 depositAmount = 1_000e6;
-        deal(MC.USDC, alice, depositAmount);
-        // Mint Curve LP by depositing USDC, then deposit that LP into the strategy.
-        vm.startPrank(alice);
-        IERC20(MC.USDC).approve(address(underlyingAsset), depositAmount);
-        uint256[] memory amounts = new uint256[](2);
-        amounts[1] = depositAmount;
-        ICurvePool(underlyingAsset).add_liquidity(amounts, 0);
-        uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
+        uint256 lpTokens = deposit_lp(alice, depositAmount);
 
-        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
-        stakedLPStrategy.deposit(lpBalance, alice);
+        // Deposit LP tokens into the strategy for Alice
+        vm.startPrank(alice);
+        IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpTokens);
+        stakedLPStrategy.deposit(lpTokens, alice);
         vm.stopPrank();
 
         // Preview withdraw: how many shares required to withdraw given assets?
@@ -92,20 +89,14 @@ contract VaultViewsTest is BaseIntegrationTest {
     }
 
     function test_previewRedeem() public {
-        // What's deposited is the LP.
         address alice = makeAddr("alice");
         uint256 depositAmount = 1_000e6;
-        deal(MC.USDC, alice, depositAmount);
 
-        // Mint Curve LP by depositing USDC, then deposit that LP into the strategy.
+        // Use helper for minting curve LP and depositing it to the strategy for Alice
+        uint256 lpBalance = deposit_lp(alice, depositAmount);
+
+        // Deposit LP tokens into the strategy for Alice
         vm.startPrank(alice);
-        IERC20(MC.USDC).approve(address(underlyingAsset), depositAmount);
-        // Add liquidity with USDC to get LP tokens (USDC is index 1)
-        uint256[] memory amounts = new uint256[](2);
-        amounts[1] = depositAmount;
-        ICurvePool(underlyingAsset).add_liquidity(amounts, 0);
-        uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
-
         IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         stakedLPStrategy.deposit(lpBalance, alice);
         vm.stopPrank();
@@ -121,14 +112,28 @@ contract VaultViewsTest is BaseIntegrationTest {
         uint256 depositAmount = 10_000e6;
         deal(MC.USDC, alice, depositAmount);
 
+        // Convert USDC to ynUSDx, then deposit into Curve LP for Alice
         vm.startPrank(alice);
-        IERC20(MC.USDC).approve(address(underlyingAsset), depositAmount);
+
+        // Approve and deposit USDC to ynUSDx Vault
+        IERC20(MC.USDC).approve(MC.YNUSDX, depositAmount);
+        uint256 ynusdxBalance = IERC4626(MC.YNUSDX).deposit(depositAmount, alice);
+
+        // Approve ynUSDx to Curve LP
+        IERC20(MC.YNUSDX).approve(underlyingAsset, ynusdxBalance);
+
+        // Provide ynUSDx as one-sided liquidity (all in amounts[1])
         uint256[] memory amounts = new uint256[](2);
-        amounts[1] = depositAmount;
+        amounts[0] = 0;
+        amounts[1] = ynusdxBalance;
         ICurvePool(underlyingAsset).add_liquidity(amounts, 0);
+
         uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
+
+        // Now deposit LP tokens into the strategy for Alice
         IERC20(underlyingAsset).approve(address(stakedLPStrategy), lpBalance);
         stakedLPStrategy.deposit(lpBalance, alice);
+
         vm.stopPrank();
 
         // Can check totalAssets and max functions

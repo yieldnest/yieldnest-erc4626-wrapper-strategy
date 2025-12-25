@@ -8,6 +8,8 @@ library MainnetContracts {
 
     address public constant YNRWAX = 0x01Ba69727E2860b37bc1a2bd56999c1aFb4C15D8;
 
+    address public constant YNUSDX = 0x3DB228FE836D99Ccb25Ec4dfdC80ED6d2CDdCB4b;
+
     address public constant GHO = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
 
     address public constant CURVE_ynUSDx_ynRWAx_LP = 0x54f81E313eb47236C5AB781f680bB91e58Ac6dB7;
