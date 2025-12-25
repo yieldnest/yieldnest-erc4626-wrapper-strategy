@@ -174,17 +174,19 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         // Constrain withdrawAmount to Alice's available shares
         withdrawAmount = bound(withdrawAmount, 1, shares);
+        address redeemableAsset = ICurvePool(underlyingAsset).coins(uint256(uint128(strategyAdapter.curveAssetIndex())));
 
-        uint256 aliceUSDCBefore = IERC20(MC.USDC).balanceOf(alice);
+        uint256 aliceRedeemableAssetBefore = IERC20(redeemableAsset).balanceOf(alice);
 
         uint256 redeemableAmount = strategyAdapter.previewWithdrawSingleSided(withdrawAmount);
 
         strategyAdapter.withdrawSingleSided(withdrawAmount, 0);
-
-        uint256 aliceUSDCAfter = IERC20(MC.USDC).balanceOf(alice);
-
         // Check Alice received USDC
-        assertEq(aliceUSDCAfter, aliceUSDCBefore + redeemableAmount, "USDC received does not match preview");
+        assertEq(
+            IERC20(redeemableAsset).balanceOf(alice),
+            aliceRedeemableAssetBefore + redeemableAmount,
+            "USDC received does not match preview"
+        );
 
         // Check shares decreased
         uint256 aliceSharesAfter = IERC20(stakedLPStrategy).balanceOf(alice);
