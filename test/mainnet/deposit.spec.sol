@@ -22,7 +22,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         deposit_lp(alice, depositAmount);
 
         uint256 lpBalance = IERC20(underlyingAsset).balanceOf(alice);
-
+        vm.startPrank(alice);
         IERC20(underlyingAsset).approve(targetVault, lpBalance);
 
         IERC4626(targetVault).deposit(lpBalance, alice);
