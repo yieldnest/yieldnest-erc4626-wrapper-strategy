@@ -42,6 +42,7 @@ contract DeployStrategy is BaseScript {
                 baseAsset: baseAsset,
                 targetVault: targetVault,
                 countNativeAsset: countNativeAsset,
+                alwaysComputeTotalAssets: alwaysComputeTotalAssets,
                 implementations: implementations
             })
         );

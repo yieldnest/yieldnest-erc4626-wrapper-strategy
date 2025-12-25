@@ -38,6 +38,7 @@ contract BaseIntegrationTest is Test, AssertUtils {
                 baseAsset: underlyingAsset,
                 targetVault: targetVault,
                 countNativeAsset: false,
+                alwaysComputeTotalAssets: false,
                 skipTargetVault: false
             })
         );

@@ -26,6 +26,7 @@ abstract contract BaseScript is Script {
         address baseAsset;
         address targetVault;
         bool countNativeAsset;
+        bool alwaysComputeTotalAssets;
         bool skipTargetVault;
     }
 
@@ -37,6 +38,7 @@ abstract contract BaseScript is Script {
         countNativeAsset = params.countNativeAsset;
         baseAsset = params.baseAsset;
         skipTargetVault = params.skipTargetVault;
+        alwaysComputeTotalAssets = params.alwaysComputeTotalAssets;
     }
 
     Env public deploymentEnv = Env.PROD;
@@ -46,6 +48,7 @@ abstract contract BaseScript is Script {
     uint8 public decimals;
     address public targetVault;
     bool public countNativeAsset;
+    bool public alwaysComputeTotalAssets;
     address public baseAsset;
     bool public skipTargetVault;
 

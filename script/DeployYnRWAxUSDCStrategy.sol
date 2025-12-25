@@ -11,6 +11,7 @@ contract DeployYnRWAxUSDCStrategy is DeployStrategy {
                 baseAsset: MC.CURVE_ynRWAx_USDC_LP,
                 targetVault: MC.STAKEDAO_CURVE_ynRWAx_USDC_VAULT,
                 skipTargetVault: false,
+                alwaysComputeTotalAssets: false,
                 countNativeAsset: false
             })
         );
