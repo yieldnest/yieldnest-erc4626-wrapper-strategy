@@ -142,9 +142,11 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         // Withdraw all shares single-sided (receiving USDC)
         strategyAdapter.withdrawSingleSided(withdrawSingleSidedAmount, 0);
 
-        assertEq(IERC20(MC.USDC).balanceOf(alice), redeemableAmount, "Alice's USDC balance mismatch");
+        address redeemableAsset = ICurvePool(underlyingAsset).coins(uint256(uint128(strategyAdapter.curveAssetIndex())));
 
-        assertGt(IERC20(MC.USDC).balanceOf(alice), 1e6, "Alice's USDC balance mismatch");
+        assertEq(IERC20(redeemableAsset).balanceOf(alice), redeemableAmount, "Alice's USDC balance mismatch");
+
+        assertGt(IERC20(redeemableAsset).balanceOf(alice), 1e6, "Alice's USDC balance mismatch");
 
         vm.stopPrank();
     }
