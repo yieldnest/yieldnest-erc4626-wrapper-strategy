@@ -219,6 +219,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         IERC20(underlyingAsset).transfer(address(stakedLPStrategy), bobLp);
         vm.stopPrank();
 
+        stakedLPStrategy.processAccounting();
+
         // At this point alice has all the shares, but the vault has double the assets
         uint256 totalAssets = stakedLPStrategy.totalAssets();
         assertEq(totalAssets, aliceLp + bobLp, "Total assets should include Alice's deposit and Bob's donation");
@@ -272,6 +274,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         IERC20(underlyingAsset).transfer(address(stakedLPStrategy), bobLp);
         vm.stopPrank();
 
+        stakedLPStrategy.processAccounting();
+
         // At this point alice has all the shares, but the vault has double the assets
         uint256 totalAssets = stakedLPStrategy.totalAssets();
         assertEq(totalAssets, aliceLp + bobLp, "Total assets should include Alice's deposit and Bob's donation");
@@ -324,6 +328,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         vm.startPrank(bob);
         IERC20(underlyingAsset).transfer(address(stakedLPStrategy), bobLp);
         vm.stopPrank();
+
+        stakedLPStrategy.processAccounting();
 
         // Record state after donation
         assertEq(stakedLPStrategy.totalAssets(), aliceLp + bobLp, "Total assets should reflect Alice's and Bob's");
