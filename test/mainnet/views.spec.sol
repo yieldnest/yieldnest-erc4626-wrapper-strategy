@@ -185,4 +185,15 @@ contract VaultViewsTest is BaseIntegrationTest {
         assertEq(hooks[1].name(), "PerformanceFeeHooks", "Hooks[1] name should be PerformanceFeeHooks");
         assertEq(hooks[2].name(), "ProcessAccountingGuardHook", "Hooks[2] name should be ProcessAccountingGuardHook");
     }
+
+    function test_hooks_has_correct_config() public view {
+        IMetaHooks metaHooks = IMetaHooks(address(stakedLPStrategy.hooks()));
+        IHooks[] memory hooks = metaHooks.getHooks();
+        assertEq(hooks[0].getConfig().beforeDeposit, false, "Hooks[0] beforeDeposit should be false");
+        assertEq(hooks[0].getConfig().afterDeposit, true, "Hooks[0] afterDeposit should be true");
+        assertEq(hooks[0].getConfig().beforeMint, false, "Hooks[0] beforeMint should be false");
+        assertEq(hooks[0].getConfig().afterMint, true, "Hooks[0] afterMint should be true");
+        assertEq(hooks[0].getConfig().beforeRedeem, true, "Hooks[0] beforeRedeem should be true");
+        assertEq(hooks[0].getConfig().beforeWithdraw, true, "Hooks[0] beforeWithdraw should be true");
+    }
 }
