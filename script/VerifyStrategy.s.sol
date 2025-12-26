@@ -106,8 +106,17 @@ contract VerifyStrategy is BaseScript, Test {
                 strategy, actors.FEE_MANAGER(), strategy.FEE_MANAGER_ROLE(), true, "Fee Manager has FEE_MANAGER_ROLE"
             );
 
-            // Proxy roles on strategy
-            //RolesVerification.verifyProxyRoles(address(strategy), strategyProxyAdmin, address(timelock));
+            {
+                // Adapted for local variables and context in this script
+                bool isProxyAdmin = ProxyUtils.getProxyAdmin(address(strategy)) == strategyProxyAdmin;
+                console.log(isProxyAdmin ? "\u2705" : "\u274C", "Proxy admin is correct:", strategyProxyAdmin);
+                assertTrue(isProxyAdmin, "Proxy admin is not correct");
+
+                bool isProxyAdminOwner =
+                    Ownable(ProxyUtils.getProxyAdmin(address(strategy))).owner() == address(timelock);
+                console.log(isProxyAdminOwner ? "\u2705" : "\u274C", "Proxy admin owner is correct:", address(timelock));
+                assertTrue(isProxyAdminOwner, "Proxy admin owner is not correct");
+            }
 
             // verify timelock and temporary roles
             RolesVerification.verifyTimelockRoles(timelock, IVerifierActors(address(actors)), minDelay);
