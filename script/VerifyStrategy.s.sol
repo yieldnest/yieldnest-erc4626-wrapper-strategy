@@ -16,6 +16,9 @@ import {IHooksFactory} from "src/interfaces/IHooksFactory.sol";
 import {Test} from "lib/forge-std/src/Test.sol";
 import {IMetaHooks} from "src/interfaces/IMetaHooks.sol";
 import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
+import {IFeeHooks} from "lib/yieldnest-vault/src/interface/IFeeHooks.sol";
+import {IProcessAccountingGuardHook} from "src/interfaces/IProcessAccountingGuardHook.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/console.sol";
 
 // forge script VerifyStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
@@ -115,5 +118,37 @@ contract VerifyStrategy is BaseScript, Test {
         assertEq(hooks[0].getConfig().afterMint, true, "Hooks[0] afterMint should be true");
         assertEq(hooks[0].getConfig().beforeRedeem, true, "Hooks[0] beforeRedeem should be true");
         assertEq(hooks[0].getConfig().beforeWithdraw, true, "Hooks[0] beforeWithdraw should be true");
+
+        IProcessAccountingGuardHook processAccountingGuardHook = IProcessAccountingGuardHook(address(hooks[2]));
+        assertEq(processAccountingGuardHook.owner(), actors.ADMIN(), "ProcessAccountingGuardHook owner should be ADMIN");
+        assertEq(
+            processAccountingGuardHook.maxTotalAssetsDecreaseRatio(),
+            0.001 ether,
+            "ProcessAccountingGuardHook maxTotalAssetsDecreaseRatio should be 0.001 ether"
+        );
+        assertEq(
+            processAccountingGuardHook.maxTotalAssetsIncreaseRatio(),
+            0.002 ether,
+            "ProcessAccountingGuardHook maxTotalAssetsIncreaseRatio should be 0.002 ether"
+        );
+        assertEq(
+            processAccountingGuardHook.maxTotalSupplyIncreaseRatio(),
+            0 ether,
+            "ProcessAccountingGuardHook maxTotalSupplyIncreaseRatio should be 0 ether"
+        );
+        assertEq(
+            processAccountingGuardHook.expectedPerformanceFee(),
+            0 ether,
+            "ProcessAccountingGuardHook expectedPerformanceFee should be 0 ether"
+        );
+
+        IFeeHooks feeHooks = IFeeHooks(address(hooks[1]));
+        assertEq(Ownable(address(feeHooks)).owner(), actors.ADMIN(), "FeeHooks owner should be ADMIN");
+        assertEq(feeHooks.performanceFee(), 0 ether, "FeeHooks performanceFee should be 0 ether");
+        assertEq(
+            feeHooks.performanceFeeRecipient(),
+            actors.FEE_RECEIVER(),
+            "FeeHooks performanceFeeRecipient should be FEE_RECEIVER"
+        );
     }
 }

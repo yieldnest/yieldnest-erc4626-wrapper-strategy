@@ -15,11 +15,7 @@ import {ICurvePool} from "src/interfaces/ICurvePool.sol";
 import {StrategyAdapter} from "test/helpers/StrategyAdapter.sol";
 import {IVault, ViewUtils} from "lib/yieldnest-vault/test/utils/ViewUtils.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface IProcessAccountingGuardHook {
-    function setMaxTotalAssetsDecreaseRatio(uint256 _maxTotalAssetsDecreaseRatio) external;
-    function setMaxTotalAssetsIncreaseRatio(uint256 _maxTotalAssetsIncreaseRatio) external;
-}
+import {IProcessAccountingGuardHook} from "src/interfaces/IProcessAccountingGuardHook.sol";
 
 contract BaseIntegrationTest is Test, AssertUtils {
     ERC4626WrapperStrategy public stakedLPStrategy;
