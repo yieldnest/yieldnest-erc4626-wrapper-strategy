@@ -258,6 +258,8 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         address alice = makeAddr("alice");
         address bob = makeAddr("bob");
 
+        setMaxTotalAssetsIncreaseRatio(address(stakedLPStrategy), 1 ether);
+
         // Alice and Bob are both funded with USDC to mint LP tokens
         uint256 depositAmount = 100_000e6;
         deal(MC.USDC, alice, depositAmount);
@@ -313,6 +315,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
         address alice = makeAddr("alice");
         address bob = makeAddr("bob");
         address charlie = makeAddr("charlie");
+
+        // increase the max total assets decrease ratio to 1 ether to allow for large donations
+        setMaxTotalAssetsIncreaseRatio(address(stakedLPStrategy), 1 ether);
 
         uint256 depositAmount = 100_000e6;
         uint256 donationAmount = 50_000e6;
