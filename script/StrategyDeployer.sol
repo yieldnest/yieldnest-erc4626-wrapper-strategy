@@ -151,10 +151,15 @@ contract StrategyDeployer {
             ERC4626WrapperHooks hooks = new ERC4626WrapperHooks(address(metaHooks), targetVault);
 
             IHooks feeHooks =
-                implementations.hooksFactory.createFeeHooks(address(strategy), actors.ADMIN(), 0, actors.ADMIN());
+                implementations.hooksFactory.createFeeHooks(address(metaHooks), actors.ADMIN(), 0, actors.ADMIN());
 
             IHooks processAccountingGuardHook = implementations.hooksFactory.createProcessAccountingGuardHook(
-                address(strategy), actors.ADMIN(), 0, 0, 0, 0
+                address(metaHooks), // 1: pass address(metaHooks) as the vault argument
+                actors.ADMIN(), // 2: pass actors.ADMIN() as the owner argument
+                0.001 ether, // 3: set maxDecreaseRatio to 0.001 ether (0.1%)
+                0.001 ether, // 4: set maxIncreaseRatio to 0.001 ether (0.1%)
+                0.001 ether, // 5: set maxTotalSupplyIncreaseRatio to 0.001 ether (0.1%)
+                0 ether // 6: performanceFee is set to 0 ether
             );
 
             strategy.setHooks(address(metaHooks));
