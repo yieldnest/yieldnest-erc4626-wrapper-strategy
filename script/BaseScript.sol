@@ -9,6 +9,7 @@ import {MainnetActors, IActors} from "@yieldnest-vault-script/Actors.sol";
 import {IContracts, L1Contracts} from "@yieldnest-vault-script/Contracts.sol";
 import {ERC4626WrapperStrategy} from "src/ERC4626WrapperStrategy.sol";
 import {StrategyDeployer} from "script/StrategyDeployer.sol";
+import {ProxyUtils} from "lib/yieldnest-vault/script/ProxyUtils.sol";
 import {console} from "forge-std/console.sol";
 
 abstract contract BaseScript is Script {
@@ -147,6 +148,8 @@ abstract contract BaseScript is Script {
         vm.serializeAddress(symbol(), "rateProvider", address(rateProvider));
         vm.serializeAddress(symbol(), "targetVault", targetVault);
         vm.serializeAddress(symbol(), string.concat(symbol(), "-proxy"), address(strategy));
+
+        strategyProxyAdmin = ProxyUtils.getProxyAdmin(address(strategy));
         vm.serializeAddress(symbol(), string.concat(symbol(), "-proxyAdmin"), strategyProxyAdmin);
 
         string memory jsonOutput = symbol(); // For vm.writeJson only needs the key
