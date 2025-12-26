@@ -12,6 +12,8 @@ import {TimelockController} from "@openzeppelin/contracts/governance/TimelockCon
 import {IProvider} from "lib/yieldnest-vault/src/interface/IProvider.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {Script} from "forge-std/Script.sol";
+import {Provider} from "src/module/Provider.sol";
+import {IHooksFactory} from "src/interfaces/IHooksFactory.sol";
 
 // forge script DeployStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
 // <CAST_WALLET_ACCOUNT>  --sender <SENDER_ADDRESS>  --verify --etherscan-api-key <ETHERSCAN_API_KEY>  -vvv
@@ -60,6 +62,8 @@ contract DeployStrategy is BaseScript {
         StrategyDeployer.Implementations memory implementations;
         implementations.stakedLpStrategyImplementation = new ERC4626WrapperStrategy();
         implementations.timelockController = timelock;
+        implementations.hooksFactory = IHooksFactory(0x030cA515342C7d5DD20CeaD9c9817a7279F23e63);
+        implementations.provider = new Provider(targetVault, 10 ** decimals);
 
         StrategyDeployer strategyDeployer = createDeployer(implementations);
         // The Deployer is the Strategy Deployer contract

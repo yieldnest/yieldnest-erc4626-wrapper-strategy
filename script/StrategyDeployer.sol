@@ -18,7 +18,6 @@ import {SingleAssetProvider} from "src/module/SingleAssetProvider.sol";
 import {IHooksFactory} from "src/interfaces/IHooksFactory.sol";
 import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
 import {IMetaHooks} from "src/interfaces/IMetaHooks.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract StrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -40,6 +39,7 @@ contract StrategyDeployer {
         ERC4626WrapperStrategy stakedLpStrategyImplementation;
         TimelockController timelockController;
         IHooksFactory hooksFactory;
+        Provider provider;
     }
 
     ERC4626WrapperStrategy public strategy;
@@ -157,14 +157,24 @@ contract StrategyDeployer {
                 address(strategy), actors.ADMIN(), 0, 0, 0, 0
             );
 
-            strategy.setHooks(address(hooks));
+            strategy.setHooks(address(metaHooks));
 
-            AccessControl(address(metaHooks)).grantRole(metaHooks.DEFAULT_ADMIN_ROLE(), actors.ADMIN());
-            AccessControl(address(metaHooks)).grantRole(metaHooks.HOOK_MANAGER_ROLE(), actors.ADMIN());
+            // Use IMetaHooks interface directly, instead of AccessControl casting.
+
+            metaHooks.grantRole(metaHooks.DEFAULT_ADMIN_ROLE(), actors.ADMIN());
+            metaHooks.grantRole(metaHooks.HOOK_MANAGER_ROLE(), actors.ADMIN());
+
+            {
+                address[] memory hooksArray = new address[](3);
+                hooksArray[0] = address(hooks);
+                hooksArray[1] = address(feeHooks);
+                hooksArray[2] = address(processAccountingGuardHook);
+                metaHooks.setHooks(hooksArray);
+            }
 
             // renounce for deployer
-            AccessControl(address(metaHooks)).renounceRole(metaHooks.DEFAULT_ADMIN_ROLE(), address(this));
-            AccessControl(address(metaHooks)).renounceRole(metaHooks.HOOK_MANAGER_ROLE(), address(this));
+            metaHooks.renounceRole(metaHooks.DEFAULT_ADMIN_ROLE(), address(this));
+            metaHooks.renounceRole(metaHooks.HOOK_MANAGER_ROLE(), address(this));
 
             strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
         }
@@ -189,10 +199,6 @@ contract StrategyDeployer {
     }
 
     function deployRateProvider() internal {
-        if (targetVaultIsSet()) {
-            rateProvider = IProvider(address(new Provider(targetVault, 10 ** decimals)));
-        } else {
-            rateProvider = IProvider(address(new SingleAssetProvider(baseAsset, 10 ** decimals)));
-        }
+        rateProvider = IProvider(address(implementations.provider));
     }
 }
