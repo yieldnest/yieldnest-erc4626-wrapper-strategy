@@ -33,7 +33,7 @@ contract ERC4626WrapperHooks is IHooks {
      * @return The name of the hooks module
      */
     function name() external pure override returns (string memory) {
-        return "StakedLpStrategyHooks";
+        return "ERC4626WrapperHooks";
     }
 
     /**

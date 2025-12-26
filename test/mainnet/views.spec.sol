@@ -6,6 +6,8 @@ import {BaseIntegrationTest} from "test/mainnet/BaseIntegrationTest.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
+import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
+import {IMetaHooks} from "src/interfaces/IMetaHooks.sol";
 import {console} from "forge-std/console.sol";
 
 contract VaultViewsTest is BaseIntegrationTest {
@@ -170,5 +172,17 @@ contract VaultViewsTest is BaseIntegrationTest {
         uint256 expectedRedeemableAmount = ICurvePool(underlyingAsset).calc_withdraw_one_coin(withdrawLpAmount, 1);
 
         assertEq(redeemableAmount, expectedRedeemableAmount, "Redeemable amount mismatch");
+    }
+
+    function test_hooks_is_metahooks() public view {
+        // The "hooks" for this strategy should be set to metahooks address
+        IMetaHooks metaHooks = IMetaHooks(address(stakedLPStrategy.hooks()));
+        assertEq(metaHooks.name(), "MetaHooks", "Hooks name should be MetaHooks");
+
+        IHooks[] memory hooks = metaHooks.getHooks();
+        assertEq(hooks.length, 3, "Hooks length should be 3");
+        assertEq(hooks[0].name(), "ERC4626WrapperHooks", "Hooks[0] name should be ERC4626WrapperHooks");
+        assertEq(hooks[1].name(), "PerformanceFeeHooks", "Hooks[1] name should be PerformanceFeeHooks");
+        assertEq(hooks[2].name(), "ProcessAccountingGuardHook", "Hooks[2] name should be ProcessAccountingGuardHook");
     }
 }

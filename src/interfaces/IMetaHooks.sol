@@ -9,6 +9,7 @@ interface IMetaHooks is IHooks {
     function HOOK_MANAGER_ROLE() external pure returns (bytes32);
 
     function setHooks(address[] memory hooks_) external;
+    function getHooks() external view returns (IHooks[] memory);
 
     function grantRole(bytes32 role, address account) external;
     function renounceRole(bytes32 role, address account) external;
