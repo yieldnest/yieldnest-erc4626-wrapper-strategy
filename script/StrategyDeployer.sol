@@ -159,8 +159,8 @@ contract StrategyDeployer {
                 address(metaHooks), // 1: pass address(metaHooks) as the vault argument
                 actors.ADMIN(), // 2: pass actors.ADMIN() as the owner argument
                 0.001 ether, // 3: set maxDecreaseRatio to 0.001 ether (0.1%)
-                0.001 ether, // 4: set maxIncreaseRatio to 0.001 ether (0.1%)
-                0.001 ether, // 5: set maxTotalSupplyIncreaseRatio to 0.001 ether (0.1%)
+                0.002 ether, // 4: set maxIncreaseRatio to 0.002 ether (0.2%)
+                0 ether, // 5: set maxTotalSupplyIncreaseRatio to 0%
                 0 ether // 6: performanceFee is set to 0 ether
             );
 
@@ -172,15 +172,15 @@ contract StrategyDeployer {
             metaHooks.grantRole(metaHooks.HOOK_MANAGER_ROLE(), actors.ADMIN());
 
             {
-                // address[] memory hooksArray = new address[](3);
-                // hooksArray[0] = address(erc4626WrapperHooks);
-                // hooksArray[1] = address(feeHooks);
-                // hooksArray[2] = address(processAccountingGuardHook);
-                // metaHooks.setHooks(hooksArray);
-
-                address[] memory hooksArray = new address[](1);
+                address[] memory hooksArray = new address[](3);
                 hooksArray[0] = address(erc4626WrapperHooks);
+                hooksArray[1] = address(feeHooks);
+                hooksArray[2] = address(processAccountingGuardHook);
                 metaHooks.setHooks(hooksArray);
+
+                // address[] memory hooksArray = new address[](1);
+                // hooksArray[0] = address(erc4626WrapperHooks);
+                // metaHooks.setHooks(hooksArray);
             }
 
             // renounce for deployer

@@ -13,6 +13,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
 import {StrategyAdapter} from "test/helpers/StrategyAdapter.sol";
+import {IVault, ViewUtils} from "lib/yieldnest-vault/test/utils/ViewUtils.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+interface IProcessAccountingGuardHook {
+    function setMaxTotalAssetsDecreaseRatio(uint256 _maxTotalAssetsDecreaseRatio) external;
+    function setMaxTotalAssetsIncreaseRatio(uint256 _maxTotalAssetsIncreaseRatio) external;
+}
 
 contract BaseIntegrationTest is Test, AssertUtils {
     ERC4626WrapperStrategy public stakedLPStrategy;
@@ -97,5 +104,13 @@ contract BaseIntegrationTest is Test, AssertUtils {
         vm.stopPrank();
 
         return lpTokens;
+    }
+
+    function setMaxTotalAssetsIncreaseRatio(address vault, uint256 _maxTotalAssetsIncreaseRatio) internal {
+        address guardHook = ViewUtils.getHooks(IVault(payable(vault)), "ProcessAccountingGuardHook");
+        address owner = Ownable(guardHook).owner();
+        vm.startPrank(owner);
+        IProcessAccountingGuardHook(guardHook).setMaxTotalAssetsIncreaseRatio(_maxTotalAssetsIncreaseRatio);
+        vm.stopPrank();
     }
 }

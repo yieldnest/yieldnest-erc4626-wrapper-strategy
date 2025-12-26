@@ -6,7 +6,6 @@ import {BaseIntegrationTest} from "test/mainnet/BaseIntegrationTest.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICurvePool} from "src/interfaces/ICurvePool.sol";
-import {console} from "forge-std/console.sol";
 
 contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     function setUp() public override {
@@ -200,6 +199,9 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
     function test_withdraw_after_deposit_and_donation() public {
         address alice = makeAddr("alice");
         address bob = makeAddr("bob");
+
+        // increase the max total assets decrease ratio to 10 ether to allow for large donations
+        setMaxTotalAssetsIncreaseRatio(address(stakedLPStrategy), 10 ether);
 
         // Alice and Bob are both funded with USDC to mint LP tokens
         uint256 depositAmount = 100_000e6;
