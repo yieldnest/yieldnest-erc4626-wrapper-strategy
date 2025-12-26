@@ -15,6 +15,10 @@ import {BaseRules} from "lib/yieldnest-vault/script/rules/BaseRules.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {IERC20Metadata} from "lib/yieldnest-vault/src/Common.sol";
 import {SingleAssetProvider} from "src/module/SingleAssetProvider.sol";
+import {IHooksFactory} from "src/interfaces/IHooksFactory.sol";
+import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
+import {IMetaHooks} from "src/interfaces/IMetaHooks.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract StrategyDeployer {
     error InvalidDeploymentParams(string);
@@ -35,6 +39,7 @@ contract StrategyDeployer {
     struct Implementations {
         ERC4626WrapperStrategy stakedLpStrategyImplementation;
         TimelockController timelockController;
+        IHooksFactory hooksFactory;
     }
 
     ERC4626WrapperStrategy public strategy;
@@ -137,10 +142,32 @@ contract StrategyDeployer {
             strategy.setProvider(address(rateProvider));
         }
 
-        ERC4626WrapperHooks hooks = new ERC4626WrapperHooks(address(strategy), targetVault);
-        strategy.setHooks(address(hooks));
+        {
+            address hooksOwner = address(this);
+            IHooks[] memory emptyArray = new IHooks[](0);
+            IMetaHooks metaHooks =
+                implementations.hooksFactory.createMetaHooks(address(strategy), hooksOwner, hooksOwner, emptyArray);
 
-        strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
+            ERC4626WrapperHooks hooks = new ERC4626WrapperHooks(address(metaHooks), targetVault);
+
+            IHooks feeHooks =
+                implementations.hooksFactory.createFeeHooks(address(strategy), actors.ADMIN(), 0, actors.ADMIN());
+
+            IHooks processAccountingGuardHook = implementations.hooksFactory.createProcessAccountingGuardHook(
+                address(strategy), actors.ADMIN(), 0, 0, 0, 0
+            );
+
+            strategy.setHooks(address(hooks));
+
+            AccessControl(address(metaHooks)).grantRole(metaHooks.DEFAULT_ADMIN_ROLE(), actors.ADMIN());
+            AccessControl(address(metaHooks)).grantRole(metaHooks.HOOK_MANAGER_ROLE(), actors.ADMIN());
+
+            // renounce for deployer
+            AccessControl(address(metaHooks)).renounceRole(metaHooks.DEFAULT_ADMIN_ROLE(), address(this));
+            AccessControl(address(metaHooks)).renounceRole(metaHooks.HOOK_MANAGER_ROLE(), address(this));
+
+            strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
+        }
 
         if (targetVaultIsSet()) {
             SafeRules.RuleParams[] memory rules = new SafeRules.RuleParams[](3);
