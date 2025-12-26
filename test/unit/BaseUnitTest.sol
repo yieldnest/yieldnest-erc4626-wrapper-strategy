@@ -77,7 +77,8 @@ contract BaseUnitTest is Test, AssertUtils {
         stakedLPStrategy.unpause();
         vm.stopPrank();
 
-        ERC4626WrapperHooks hooks = new ERC4626WrapperHooks(address(stakedLPStrategy), address(mockERC4626));
+        ERC4626WrapperHooks hooks =
+            new ERC4626WrapperHooks(address(stakedLPStrategy), address(stakedLPStrategy), address(mockERC4626));
         vm.startPrank(ADMIN);
         stakedLPStrategy.setHooks(address(hooks));
         stakedLPStrategy.grantRole(stakedLPStrategy.PROCESSOR_ROLE(), address(hooks));

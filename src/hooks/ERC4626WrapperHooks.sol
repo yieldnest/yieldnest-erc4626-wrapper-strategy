@@ -13,14 +13,16 @@ contract ERC4626WrapperHooks is IHooks {
     IVault public immutable vault;
     /// @notice The vault that the strategy is staking to
     IERC4626 public immutable targetVault;
+    address public immutable caller;
 
-    constructor(address _vault, address targetVault_) {
+    constructor(address _vault, address caller_, address targetVault_) {
         vault = IVault(_vault);
         targetVault = IERC4626(targetVault_);
+        caller = caller_;
     }
 
     modifier onlyVault() {
-        if (msg.sender != address(vault)) {
+        if (msg.sender != caller) {
             revert CallerNotVault();
         }
         _;

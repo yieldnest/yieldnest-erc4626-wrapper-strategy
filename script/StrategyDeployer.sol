@@ -148,7 +148,9 @@ contract StrategyDeployer {
             IMetaHooks metaHooks =
                 implementations.hooksFactory.createMetaHooks(address(strategy), hooksOwner, hooksOwner, emptyArray);
 
-            ERC4626WrapperHooks hooks = new ERC4626WrapperHooks(address(metaHooks), targetVault);
+            //  The vault is the strategy, but the caller is the metaHooks
+            ERC4626WrapperHooks erc4626WrapperHooks =
+                new ERC4626WrapperHooks(address(strategy), address(metaHooks), targetVault);
 
             IHooks feeHooks =
                 implementations.hooksFactory.createFeeHooks(address(metaHooks), actors.ADMIN(), 0, actors.ADMIN());
@@ -170,10 +172,14 @@ contract StrategyDeployer {
             metaHooks.grantRole(metaHooks.HOOK_MANAGER_ROLE(), actors.ADMIN());
 
             {
-                address[] memory hooksArray = new address[](3);
-                hooksArray[0] = address(hooks);
-                hooksArray[1] = address(feeHooks);
-                hooksArray[2] = address(processAccountingGuardHook);
+                // address[] memory hooksArray = new address[](3);
+                // hooksArray[0] = address(erc4626WrapperHooks);
+                // hooksArray[1] = address(feeHooks);
+                // hooksArray[2] = address(processAccountingGuardHook);
+                // metaHooks.setHooks(hooksArray);
+
+                address[] memory hooksArray = new address[](1);
+                hooksArray[0] = address(erc4626WrapperHooks);
                 metaHooks.setHooks(hooksArray);
             }
 
@@ -181,7 +187,7 @@ contract StrategyDeployer {
             metaHooks.renounceRole(metaHooks.DEFAULT_ADMIN_ROLE(), address(this));
             metaHooks.renounceRole(metaHooks.HOOK_MANAGER_ROLE(), address(this));
 
-            strategy.grantRole(strategy.PROCESSOR_ROLE(), address(hooks));
+            strategy.grantRole(strategy.PROCESSOR_ROLE(), address(erc4626WrapperHooks));
         }
 
         if (targetVaultIsSet()) {
