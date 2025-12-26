@@ -19,6 +19,7 @@ import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
 import {IFeeHooks} from "lib/yieldnest-vault/src/interface/IFeeHooks.sol";
 import {IProcessAccountingGuardHook} from "src/interfaces/IProcessAccountingGuardHook.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IBaseStrategy} from "lib/yieldnest-vault/src/interface/IBaseStrategy.sol";
 import {
     IActors as IVerifierActors,
     RolesVerification
@@ -59,6 +60,8 @@ contract VerifyStrategy is BaseScript, Test {
         require(strategy.getAssets()[1] == targetVault, "second asset should be targetVault");
         assertEq(strategy.countNativeAsset(), countNativeAsset, "countNativeAsset mismatch");
         assertEq(strategy.alwaysComputeTotalAssets(), alwaysComputeTotalAssets, "alwaysComputeTotalAssets mismatch");
+        assertEq(strategy.paused(), false, "strategy should not be paused");
+        assertEq(IBaseStrategy(address(strategy)).getHasAllocator(), false, "strategy should not have allocator");
 
         // Proxy/implementation checks
         {
