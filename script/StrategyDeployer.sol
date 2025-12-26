@@ -121,6 +121,8 @@ contract StrategyDeployer {
         BaseRoles.configureDefaultRolesStrategy(strategy, address(timelock), actors);
         BaseRoles.configureTemporaryRolesStrategy(strategy, deployer);
 
+        strategy.grantRole(strategy.FEE_MANAGER_ROLE(), actors.FEE_MANAGER());
+
         address underlyingAsset;
         if (!targetVaultIsSet()) {
             underlyingAsset = baseAsset;

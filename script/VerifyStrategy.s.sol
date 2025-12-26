@@ -7,7 +7,7 @@ import {SafeRules, IVault} from "@yieldnest-vault-script/rules/SafeRules.sol";
 import {StrategyDeployer} from "script/StrategyDeployer.sol";
 import {ERC4626WrapperStrategy} from "src/ERC4626WrapperStrategy.sol";
 import {BaseScript} from "script/BaseScript.sol";
-import {ProxyUtils} from "lib/yieldnest-vault/script/ProxyUtils.sol";
+import {ProxyUtils} from "@yieldnest-vault-script/ProxyUtils.sol";
 import {IProvider} from "lib/yieldnest-vault/src/interface/IProvider.sol";
 import {IERC4626} from "lib/yieldnest-vault/src/Common.sol";
 import {Script} from "forge-std/Script.sol";
@@ -19,6 +19,10 @@ import {IHooks} from "lib/yieldnest-vault/src/interface/IHooks.sol";
 import {IFeeHooks} from "lib/yieldnest-vault/src/interface/IFeeHooks.sol";
 import {IProcessAccountingGuardHook} from "src/interfaces/IProcessAccountingGuardHook.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {
+    IActors as IVerifierActors,
+    RolesVerification
+} from "lib/yieldnest-vault/script/verification/RolesVerification.sol";
 import {console} from "forge-std/console.sol";
 
 // forge script VerifyStrategy --rpc-url <MAINNET_RPC_URL>  --slow --broadcast --account
@@ -94,6 +98,21 @@ contract VerifyStrategy is BaseScript, Test {
         // Ensure strategy is set up to use the correct rate provider
         address actualRateProvider = strategy.provider();
         require(actualRateProvider == address(rateProvider), "Rate provider does not match deployment");
+
+        {
+            // verify roles and proxy configuration
+            RolesVerification.verifyDefaultRoles(strategy, timelock, IVerifierActors(address(actors))); // timelock, admin, updater, etc.
+            RolesVerification.verifyRole(
+                strategy, actors.FEE_MANAGER(), strategy.FEE_MANAGER_ROLE(), true, "Fee Manager has FEE_MANAGER_ROLE"
+            );
+
+            // Proxy roles on strategy
+            //RolesVerification.verifyProxyRoles(address(strategy), strategyProxyAdmin, address(timelock));
+
+            // verify timelock and temporary roles
+            RolesVerification.verifyTimelockRoles(timelock, IVerifierActors(address(actors)), minDelay);
+            RolesVerification.verifyTemporaryRoles(strategy, deployer);
+        }
 
         verifyHooks();
 
