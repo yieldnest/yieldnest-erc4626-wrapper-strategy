@@ -152,8 +152,9 @@ contract StrategyDeployer {
             ERC4626WrapperHooks erc4626WrapperHooks =
                 new ERC4626WrapperHooks(address(strategy), address(metaHooks), targetVault);
 
-            IHooks feeHooks =
-                implementations.hooksFactory.createFeeHooks(address(metaHooks), actors.ADMIN(), 0, actors.ADMIN());
+            IHooks feeHooks = implementations.hooksFactory.createFeeHooks(
+                address(metaHooks), actors.ADMIN(), 0, actors.FEE_RECEIVER()
+            );
 
             IHooks processAccountingGuardHook = implementations.hooksFactory.createProcessAccountingGuardHook(
                 address(metaHooks), // 1: pass address(metaHooks) as the vault argument
