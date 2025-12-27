@@ -62,6 +62,7 @@ contract VerifyStrategy is BaseScript, Test {
         assertEq(strategy.alwaysComputeTotalAssets(), alwaysComputeTotalAssets, "alwaysComputeTotalAssets mismatch");
         assertEq(strategy.paused(), false, "strategy should not be paused");
         assertEq(IBaseStrategy(address(strategy)).getHasAllocator(), false, "strategy should not have allocator");
+        assertEq(strategy.baseWithdrawalFee(), baseWithdrawalFee, "baseWithdrawalFee mismatch");
 
         // Proxy/implementation checks
         {
