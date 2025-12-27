@@ -8,8 +8,8 @@ contract VerifyYnRWAxynUSDxStrategy is VerifyStrategy {
     function run() public override {
         setDeploymentParameters(
             DeploymentParameters({
-                name: "Staked LP Strategy ynRWAx-USDx",
-                symbol_: "sLP-ynRWAx-USDx",
+                name: "STAK",
+                symbol_: "STAK",
                 decimals: 18,
                 baseAsset: MC.CURVE_ynRWAx_ynUSDx_LP,
                 targetVault: MC.STAKEDAO_CURVE_ynRWAx_ynUSDx_VAULT,
