@@ -33,7 +33,7 @@ contract VerifyStrategy is BaseScript, Test {
         return symbol_;
     }
 
-    function run() public {
+    function run() public virtual {
         _setup();
         _loadDeployment(deploymentEnv);
         assertNotEq(msg.sender, deployer, "msg.sender should not be deploye as this is a verifier script.");

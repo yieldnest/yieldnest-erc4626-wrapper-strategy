@@ -29,6 +29,7 @@ abstract contract BaseScript is Script {
         bool countNativeAsset;
         bool alwaysComputeTotalAssets;
         bool skipTargetVault;
+        uint64 baseWithdrawalFee;
     }
 
     function setDeploymentParameters(DeploymentParameters memory params) public virtual {
@@ -40,6 +41,7 @@ abstract contract BaseScript is Script {
         baseAsset = params.baseAsset;
         skipTargetVault = params.skipTargetVault;
         alwaysComputeTotalAssets = params.alwaysComputeTotalAssets;
+        baseWithdrawalFee = params.baseWithdrawalFee;
     }
 
     Env public deploymentEnv = Env.PROD;
@@ -52,6 +54,7 @@ abstract contract BaseScript is Script {
     bool public alwaysComputeTotalAssets;
     address public baseAsset;
     bool public skipTargetVault;
+    uint64 public baseWithdrawalFee;
 
     uint256 public minDelay;
     IActors public actors;

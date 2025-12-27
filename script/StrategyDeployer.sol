@@ -32,6 +32,7 @@ contract StrategyDeployer {
         address targetVault;
         bool countNativeAsset;
         bool alwaysComputeTotalAssets;
+        uint64 baseWithdrawalFee;
         Implementations implementations;
     }
 
@@ -52,12 +53,12 @@ contract StrategyDeployer {
     bool public alwaysComputeTotalAssets;
     IProvider public rateProvider;
     TimelockController public timelock;
-    IActors public actors;
-    Implementations public implementations;
+    IActors internal actors;
+    Implementations internal implementations;
     address public baseAsset;
     address public targetVault;
     address public curvePool;
-
+    uint64 public baseWithdrawalFee;
     bool public deploymentDone;
 
     constructor(DeploymentParams memory params) {
@@ -73,6 +74,7 @@ contract StrategyDeployer {
         targetVault = params.targetVault;
         countNativeAsset = params.countNativeAsset;
         alwaysComputeTotalAssets = params.alwaysComputeTotalAssets;
+        baseWithdrawalFee = params.baseWithdrawalFee;
         implementations = params.implementations;
     }
 
@@ -201,6 +203,12 @@ contract StrategyDeployer {
 
             // Set processor rules using SafeRules
             SafeRules.setProcessorRules(IVault(address(strategy)), rules, true);
+        }
+
+        {
+            strategy.grantRole(strategy.FEE_MANAGER_ROLE(), deployer);
+            strategy.setBaseWithdrawalFee(baseWithdrawalFee);
+            strategy.renounceRole(strategy.FEE_MANAGER_ROLE(), deployer);
         }
 
         strategy.unpause();
