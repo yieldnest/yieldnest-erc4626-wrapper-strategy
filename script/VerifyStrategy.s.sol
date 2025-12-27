@@ -128,6 +128,28 @@ contract VerifyStrategy is BaseScript, Test {
 
         verifyHooks();
 
+        {
+            console.log("==============================================");
+            console.log("MANUAL VERIFICATION REQUIRED");
+            console.log("==============================================");
+            console.log("Verify total assets and vault rate are reasonable:");
+            console.log("- Total assets should be the same as the previous total assets");
+            console.log("- Vault rate should be the same as the previous vault rate (vault.convertToAssets(1e18)");
+            console.log("==============================================");
+
+            console.log("==============================================");
+            console.log("TOTAL ASSETS AND VAULT RATE:");
+            console.log("==============================================");
+
+            uint256 totalAssets = strategy.totalAssets();
+            console.log("Total assets:", totalAssets);
+
+            // Print rate by converting 1e18 shares to assets
+            uint256 oneShare = 1e18;
+            uint256 assetAmount = strategy.convertToAssets(oneShare);
+            console.log("Vault rate (1 share in assets):", assetAmount);
+        }
+
         // Log success
         console.log("Strategy verification passed.");
     }
