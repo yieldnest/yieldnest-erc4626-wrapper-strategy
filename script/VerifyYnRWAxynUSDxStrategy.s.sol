@@ -16,7 +16,7 @@ contract VerifyYnRWAxynUSDxStrategy is VerifyStrategy {
                 skipTargetVault: false,
                 alwaysComputeTotalAssets: false,
                 countNativeAsset: false,
-                baseWithdrawalFee: 0.001e8
+                baseWithdrawalFee: 0.001e8 // 0.1%
             })
         );
         setEnv(Env.PROD);

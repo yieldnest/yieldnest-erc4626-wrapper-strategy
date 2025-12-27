@@ -16,7 +16,7 @@ contract DeployYnRWAxynUSDxStrategy is DeployStrategy {
                 skipTargetVault: false,
                 alwaysComputeTotalAssets: false,
                 countNativeAsset: false,
-                baseWithdrawalFee: 0.001e8
+                baseWithdrawalFee: 1e5 // 0.1%
             })
         );
         setEnv(Env.PROD);
