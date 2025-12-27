@@ -13,6 +13,7 @@ library ERC4626WrapperLib {
             IERC4626 targetERC4626Vault = IERC4626(assets[1]);
             // in case the second asset is available and configured is the same as
             // the base asset, we add the balance of the vault to the available assets
+            // assumes it's the asset that the withdrawal hooks reference.
             if (vault.asset() == asset_) {
                 availableAssetsAmount +=
                     targetERC4626Vault.convertToAssets(targetERC4626Vault.balanceOf(address(vault)));
