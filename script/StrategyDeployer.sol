@@ -53,8 +53,8 @@ contract StrategyDeployer {
     bool public alwaysComputeTotalAssets;
     IProvider public rateProvider;
     TimelockController public timelock;
-    IActors public actors;
-    Implementations public implementations;
+    IActors internal actors;
+    Implementations internal implementations;
     address public baseAsset;
     address public targetVault;
     address public curvePool;
