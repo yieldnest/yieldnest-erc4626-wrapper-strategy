@@ -15,7 +15,8 @@ contract VerifyYnRWAxynUSDxStrategy is VerifyStrategy {
                 targetVault: MC.STAKEDAO_CURVE_ynRWAx_ynUSDx_VAULT,
                 skipTargetVault: false,
                 alwaysComputeTotalAssets: false,
-                countNativeAsset: false
+                countNativeAsset: false,
+                baseWithdrawalFee: 0.001e8
             })
         );
         setEnv(Env.PROD);
