@@ -28,7 +28,8 @@ contract VerificationTest is BaseIntegrationTest {
                 targetVault: targetVault,
                 countNativeAsset: false,
                 alwaysComputeTotalAssets: false,
-                skipTargetVault: false
+                skipTargetVault: false,
+                baseWithdrawalFee: 0
             })
         );
         verifyStrategy.setEnv(BaseScript.Env.TEST);

@@ -33,7 +33,7 @@ contract VerifyStrategy is BaseScript, Test {
         return symbol_;
     }
 
-    function run() public {
+    function run() public virtual {
         _setup();
         _loadDeployment(deploymentEnv);
         assertNotEq(msg.sender, deployer, "msg.sender should not be deploye as this is a verifier script.");
@@ -62,6 +62,7 @@ contract VerifyStrategy is BaseScript, Test {
         assertEq(strategy.alwaysComputeTotalAssets(), alwaysComputeTotalAssets, "alwaysComputeTotalAssets mismatch");
         assertEq(strategy.paused(), false, "strategy should not be paused");
         assertEq(IBaseStrategy(address(strategy)).getHasAllocator(), false, "strategy should not have allocator");
+        assertEq(strategy.baseWithdrawalFee(), baseWithdrawalFee, "baseWithdrawalFee mismatch");
 
         // Proxy/implementation checks
         {

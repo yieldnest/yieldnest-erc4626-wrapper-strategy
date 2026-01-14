@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.24;
 
-import {DeployStrategy} from "script/DeployStrategy.sol";
+import {VerifyStrategy} from "script/VerifyStrategy.s.sol";
 import {MainnetContracts as MC} from "script/Contracts.sol";
 
-contract DeployYnRWAxynUSDxStrategy is DeployStrategy {
+contract VerifyYnRWAxynUSDxStrategy is VerifyStrategy {
     function run() public override {
         setDeploymentParameters(
             DeploymentParameters({
@@ -16,7 +16,7 @@ contract DeployYnRWAxynUSDxStrategy is DeployStrategy {
                 skipTargetVault: false,
                 alwaysComputeTotalAssets: false,
                 countNativeAsset: false,
-                baseWithdrawalFee: 1e5 // 0.1%
+                baseWithdrawalFee: 0.001e8 // 0.1%
             })
         );
         setEnv(Env.PROD);

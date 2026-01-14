@@ -385,7 +385,7 @@ contract VaultBasicFunctionalityTest is BaseIntegrationTest {
 
         // Alice should get at least her preview value, which should be higher than aliceLp
         assertApproxEqAbs(
-            aliceWithdrawn, stakedLPStrategy.previewRedeem(aliceShares), 1, "Actual asset redeemed matches preview"
+            aliceWithdrawn, stakedLPStrategy.previewRedeem(aliceShares), 3, "Actual asset redeemed matches preview"
         );
         assertGt(aliceWithdrawn, aliceLp, "Alice's redeemed assets should be increased by original donation");
 

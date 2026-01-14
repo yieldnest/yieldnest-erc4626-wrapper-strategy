@@ -42,7 +42,8 @@ contract BaseIntegrationTest is Test, AssertUtils {
                 targetVault: targetVault,
                 countNativeAsset: false,
                 alwaysComputeTotalAssets: false,
-                skipTargetVault: false
+                skipTargetVault: false,
+                baseWithdrawalFee: 0
             })
         );
         deployment.setEnv(BaseScript.Env.TEST);
