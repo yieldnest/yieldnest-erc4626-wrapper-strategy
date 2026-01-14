@@ -23,4 +23,10 @@ library MainnetContracts {
     address public constant STAKEDAO_CURVE_ynRWAx_ynUSDx_VAULT = 0xCa21e91eB3C601978C8293F0C3a544bA28cCC8ED;
 
     address public constant CURVE_STABLE_SWAP_FACTORY_NG = 0x6A8cbed756804B16E05E741eDaBd5cB544AE21bf;
+
+    address public constant STAK = 0xD1573de52fFF44dd92D275e20Fdab0296CCFF141;
+
+    address public constant STAKEDAO_ACCOUNTANT = 0x93b4B9bd266fFA8AF68e39EDFa8cFe2A62011Ce0;
+
+    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 }

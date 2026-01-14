@@ -33,4 +33,20 @@ library StakeDaoRules {
 
         return SafeRules.RuleParams({contractAddress: contractAddress, funcSig: funcSig, rule: rule});
     }
+
+    function getAccountantClaimRule(address contractAddress) internal pure returns (SafeRules.RuleParams memory) {
+        bytes4 funcSig = bytes4(keccak256("claim(address[],bytes[])"));
+
+        IVault.ParamRule[] memory paramRules = new IVault.ParamRule[](2);
+
+        paramRules[0] =
+            IVault.ParamRule({paramType: IVault.ParamType.UINT256, isArray: false, allowList: new address[](0)});
+        paramRules[1] =
+            IVault.ParamRule({paramType: IVault.ParamType.UINT256, isArray: false, allowList: new address[](0)});
+
+        IVault.FunctionRule memory rule =
+            IVault.FunctionRule({isActive: true, paramRules: paramRules, validator: IValidator(address(0))});
+
+        return SafeRules.RuleParams({contractAddress: contractAddress, funcSig: funcSig, rule: rule});
+    }
 }
