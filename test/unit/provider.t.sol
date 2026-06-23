@@ -31,7 +31,6 @@ contract ProviderTest is Test {
     }
 
     function testReturnsConvertToAssetsForVault() public {
-        uint256 unitValue = 1e18;
         // Prepare recipient for "donation" of vault shares to the vault itself (inflate TVL)
         // Step 1: Mint underlying to donor
         vm.startPrank(owner);
@@ -44,14 +43,38 @@ contract ProviderTest is Test {
         mockERC4626.transfer(address(mockERC4626), shares);
         vm.stopPrank();
 
-        uint256 expected = mockERC4626.convertToAssets(unitValue);
+        uint256 expected = mockERC4626.convertToAssets(10 ** mockERC4626.decimals());
         uint256 returned = provider.getRate(address(mockERC4626));
-        assertEq(returned, expected, "Should return vault convertToAssets(unitValue) after donation to vault");
+        assertEq(returned, expected, "Should return vault convertToAssets(share unit) after donation to vault");
+    }
+
+    function testReturnsConvertToAssetsForVaultUsingShareDecimals() public {
+        DifferentDecimalsVault differentDecimalsVault = new DifferentDecimalsVault(address(mockERC20), 6);
+        Provider differentDecimalsProvider = new Provider(address(differentDecimalsVault), 1e18);
+
+        uint256 expected = differentDecimalsVault.convertToAssets(1e6);
+        uint256 returned = differentDecimalsProvider.getRate(address(differentDecimalsVault));
+
+        assertEq(returned, expected, "Should normalize vault rate by share decimals");
     }
 
     function testRevertsOnUnsupportedAsset() public {
         address fakeAsset = address(0xABCD1234);
         vm.expectRevert(abi.encodeWithSelector(Provider.UnsupportedAsset.selector, fakeAsset));
         provider.getRate(fakeAsset);
+    }
+}
+
+contract DifferentDecimalsVault {
+    address public immutable asset;
+    uint8 public immutable decimals;
+
+    constructor(address asset_, uint8 decimals_) {
+        asset = asset_;
+        decimals = decimals_;
+    }
+
+    function convertToAssets(uint256 shares) external pure returns (uint256) {
+        return shares * 2;
     }
 }
